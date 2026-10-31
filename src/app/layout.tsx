@@ -32,9 +32,9 @@ export const metadata: Metadata = {
   creator: "DevTech AI Store",
   publisher: "DevTech AI Store",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.jpg",
+    shortcut: "/favicon.jpg",
+    apple: "/favicon.jpg",
   },
   alternates: {
     canonical: "https://devtechstore.my.id",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/logo.jpeg",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "DevTech AI Store Logo",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DevTech AI Store - Jual Akun ChatGPT Plus Murah",
     description: "Akses Penuh ChatGPT Plus GPT-4o & o1 Reasoning Resmi & Bergaransi dengan Harga Terbaik.",
-    images: ["/logo.jpeg"],
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -90,7 +90,7 @@ export default function RootLayout({
         "@type": "Store",
         "name": "DevTech AI Store",
         "url": "https://devtechstore.my.id",
-        "logo": "https://devtechstore.my.id/logo.jpeg",
+        "logo": "https://devtechstore.my.id/og-image.jpg",
         "description": "DevTech AI Store adalah penyedia layanan langganan Google AI Pro premium resmi dan bergaransi di Indonesia, bukan perusahaan pembuat perangkat lunak (software development). Kami fokus pada penjualan lisensi AI.",
         "priceRange": "Rp15.000 - Rp60.000",
         "paymentAccepted": "QRIS, Transfer Bank",

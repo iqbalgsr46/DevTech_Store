@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { FileHandle } from "node:fs/promises";
 import { mkdir, open, link, unlink, readFile, readdir } from "node:fs/promises";
+import type { FileHandle } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 export interface Order {
@@ -53,6 +54,11 @@ export class OrderStorageError extends Error {
 function dataDir(): string {
   const envDir = process.env.ORDERS_DATA_DIR;
   if (process.env.NODE_ENV === "production") {
+    // If running in cloud hosting (Vercel / Lambda) or explicit fallback allowed
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      if (envDir && path.isAbsolute(envDir)) return path.resolve(envDir);
+      return path.join(os.tmpdir(), "devtech_orders");
+    }
     if (!envDir || !path.isAbsolute(envDir)) {
       throw new OrderConfigError("ORDERS_DATA_DIR required and must be absolute in production");
     }

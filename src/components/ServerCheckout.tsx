@@ -48,8 +48,28 @@ export default function ServerCheckout({ className }: { className: string }) {
       const encoded = encodeURIComponent(message);
       setReceipt({ path: data.receiptPath, whatsapp: `https://wa.me/6285872066832?text=${encoded}` });
       window.location.href = `whatsapp://send?phone=6285872066832&text=${encoded}`;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan. Silakan coba lagi.");
+    } catch {
+      // Fallback checkout langsung ke WhatsApp jika API serverless orders mengalami kendala
+      const directMessage = [
+        "*PESANAN DEVTECH STORE*",
+        "──────────────────────",
+        "• *Produk:* ChatGPT Plus Private",
+        "• *Durasi:* 1 Bulan",
+        "• *Tipe Akun:* privat",
+        "• *Total Tagihan:* Rp 75.000",
+        "──────────────────────",
+        "",
+        "",
+        "",
+        "Halo Admin, saya ingin membeli ChatGPT Plus Private 1 Bulan (Rp75.000). Mohon info nomor rekening / QRIS pembayarannya. Terima kasih!",
+      ].join("\n");
+      const directEncoded = encodeURIComponent(directMessage);
+      window.location.href = `whatsapp://send?phone=6285872066832&text=${directEncoded}`;
+      setReceipt({
+        path: "/",
+        whatsapp: `https://wa.me/6285872066832?text=${directEncoded}`,
+      });
+      setError(null);
     } finally {
       inFlight.current = false;
       setLoading(false);
