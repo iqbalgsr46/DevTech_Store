@@ -1,0 +1,5 @@
+.rain{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;background:#080d10;mask-image:linear-gradient(to bottom,#000,rgba(0,0,0,.65));}
+.column{position:absolute;top:0;white-space:pre;font:13px/1.8 monospace;color:#34d399;opacity:.17;text-shadow:0 0 8px #10b981;animation:fall 32s linear infinite;user-select:none;will-change:transform;}
+@keyframes fall{from{transform:translateY(-110%)}to{transform:translateY(100vh)}}
+@media(max-width:640px){.column{font-size:11px;opacity:.13}.column:nth-child(even){display:none}}
+@media(prefers-reduced-motion:reduce){.column{animation:none;transform:translateY(-20%);opacity:.08;will-change:auto}}

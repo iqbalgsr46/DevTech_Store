@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ClaimCodeRain from "@/components/ClaimCodeRain";
 import Link from "next/link";
 import {
   Terminal as TerminalIcon,
@@ -572,16 +573,17 @@ function TerminalContent() {
 
   if (!activeCode) {
     return (
-      <div className="min-h-dvh bg-[#080d10] text-[#edf3ef] flex flex-col font-sans">
-        <header className="min-h-16 border-b border-[#23302b] px-4 sm:px-8 flex items-center justify-between gap-3 shrink-0">
+      <div className="relative isolate min-h-dvh bg-[#080d10] text-[#edf3ef] flex flex-col font-sans">
+        <ClaimCodeRain />
+        <header className="relative z-10 bg-[#080d10]/85 min-h-16 border-b border-[#23302b] px-4 sm:px-8 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <Image src="/devtech-navbar.jpg" alt="Logo DevTech" width={36} height={36} className="rounded-lg object-cover shrink-0" />
             <div><span className="font-bold text-[13px] sm:text-sm block">DevTech Store</span><span className="text-[10px] text-emerald-300 font-mono tracking-widest">ACCOUNT ACCESS</span></div>
           </div>
-          <Link href="/" className="min-h-11 flex items-center gap-1.5 text-xs text-slate-300 shrink-0 px-3 border border-[#2b3932] rounded-lg"><ArrowLeft size={14} />Toko</Link>
+          <Link href="/" className="min-h-11 flex items-center gap-1.5 text-xs text-slate-300 shrink-0 px-3 border border-[#2b3932] rounded-lg">Toko</Link>
         </header>
-        <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-10">
-          <section className="w-full max-w-lg min-w-0 bg-[#10181d] border border-[#28362f] rounded-2xl overflow-hidden">
+        <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-6 sm:py-10">
+          <section className="w-full max-w-lg min-w-0 bg-[#10181d]/95 shadow-2xl shadow-black/40 border border-[#28362f] rounded-2xl overflow-hidden">
             <div className="h-11 bg-[#0c1216] border-b border-[#28362f] px-5 flex items-center justify-between gap-3 font-mono text-[11px]">
               <span className="flex items-center gap-2 text-slate-300"><TerminalIcon size={14} className="text-emerald-300" />devtech / claim</span>
               <span className="text-emerald-300 whitespace-nowrap">01 / AKSES</span>
@@ -590,26 +592,26 @@ function TerminalContent() {
               <div className="space-y-3">
                 <p className="text-[10px] sm:text-[11px] tracking-[0.12em] font-mono text-emerald-300">CHATGPT PLUS PRIVATE</p>
                 <h1 className="text-[24px] sm:text-[28px] leading-tight font-semibold tracking-tight">Masukkan kode klaim</h1>
-                <p className="text-[13px] sm:text-sm leading-6 text-slate-300">Gunakan kode dari admin WhatsApp untuk melanjutkan ke terminal akun.</p>
+                <p className="text-[13px] sm:text-sm leading-6 text-slate-300">Masukkan kode dari admin WhatsApp untuk membuka detail akun Anda.</p>
               </div>
               <form onSubmit={handleGateSubmit} className="space-y-3">
-                <label htmlFor="claim-code" className="block text-xs font-medium text-slate-300">Kode klaim rahasia dari admin</label>
+                <label htmlFor="claim-code" className="block text-xs font-medium text-slate-300">Kode klaim</label>
                 <div className="flex items-center gap-3 bg-[#080d10] border border-[#34473c] focus-within:border-emerald-400 rounded-lg px-3.5 min-h-[52px]">
                   <span aria-hidden="true" className="text-emerald-300 font-mono shrink-0">&gt;_</span>
                   <input id="claim-code" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} value={gateInput} onChange={(e) => {setGateInput(e.target.value); if (gateError) setGateError(null);}} placeholder="Masukkan kode Anda" aria-invalid={!!gateError} aria-describedby={gateError ? "claim-error" : undefined} className="w-full min-w-0 bg-transparent text-white font-mono text-base outline-none placeholder:text-slate-400" />
                 </div>
                 {gateError && <p id="claim-error" role="alert" className="text-rose-300 text-xs leading-5">{gateError}</p>}
-                <button type="submit" className="w-full min-h-[48px] rounded-lg bg-emerald-400 hover:bg-emerald-300 text-[#062418] font-semibold text-sm flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-300"><TerminalIcon size={16} />Buka Terminal<span aria-hidden="true">→</span></button>
+                <button type="submit" className="w-full min-h-[48px] rounded-lg bg-emerald-400 hover:bg-emerald-300 text-[#062418] font-semibold text-sm flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-300">Buka Terminal</button>
               </form>
-              <div className="border-t border-[#28362f] pt-5 space-y-3 text-[12px] sm:text-[13px] leading-[1.7] text-slate-300">
-                <p>Detail akun mencakup <span className="text-white">email, password, dan kunci 2FA.</span></p>
-                <p>Gunakan kunci 2FA di <span className="text-emerald-300">2fa.live</span> untuk memperoleh kode OTP 6 digit.</p>
+              <div className="border-t border-[#28362f] pt-5 space-y-3 text-[13px] leading-6 text-slate-300">
+                <p>Anda akan menerima <span className="text-white">email, password, dan kunci 2FA.</span></p>
+                <p>Login dengan email dan password terlebih dahulu. Saat diminta OTP, gunakan kunci 2FA di <span className="text-emerald-300">2fa.live</span> untuk mendapatkan kode 6 digit.</p>
                 <p className="text-emerald-200">Akun private dengan password yang bisa Anda ganti.</p>
               </div>
             </div>
             <footer className="border-t border-[#28362f] bg-[#0c1216] px-5 py-3 sm:px-8 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs">
               <span className="text-slate-400">Belum punya kode?</span>
-              <Link href="/" className="min-h-11 inline-flex items-center text-emerald-300 font-medium hover:underline">Pesan via WhatsApp →</Link>
+              <Link href="/" className="min-h-11 inline-flex items-center text-emerald-300 font-medium hover:underline">Pesan via WhatsApp</Link>
             </footer>
           </section>
         </main>
