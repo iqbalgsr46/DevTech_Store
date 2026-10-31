@@ -30,6 +30,9 @@ import {
   Edit2,
   Trash2,
   X,
+  DollarSign,
+  Tag,
+  AlertCircle,
   Clock,
 } from "lucide-react";
 
@@ -46,8 +49,21 @@ export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Active Tab: "inventory" | "create"
-  const [activeTab, setActiveTab] = useState<"inventory" | "create">("inventory");
+  // Active Tab: "inventory" | "create" | "pricing"
+  const [activeTab, setActiveTab] = useState<"inventory" | "create" | "pricing">("inventory");
+
+  // Pricing settings state
+  const [currentPricing, setCurrentPricing] = useState<{ price: number; originalPrice: number; updatedAt: number }>(() => ({
+    price: 75000,
+    originalPrice: 150000,
+    updatedAt: 0,
+  }));
+  const [inputPrice, setInputPrice] = useState<string>("75000");
+  const [inputOriginalPrice, setInputOriginalPrice] = useState<string>("150000");
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingSaving, setPricingSaving] = useState(false);
+  const [pricingSuccess, setPricingSuccess] = useState(false);
+  const [pricingError, setPricingError] = useState("");
 
   // Form input states (CREATE)
   const [email, setEmail] = useState("");
@@ -131,6 +147,63 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchPricing = useCallback(async () => {
+    setPricingLoading(true);
+    setPricingError("");
+    try {
+      const res = await fetch("/api/pricing", { cache: "no-store" });
+      const data = await res.json();
+      if (data?.pricing?.price) {
+        setCurrentPricing(data.pricing);
+        setInputPrice(String(data.pricing.price));
+        setInputOriginalPrice(String(data.pricing.originalPrice || data.pricing.price * 2));
+      }
+    } catch {
+      setPricingError("Gagal mengambil data harga dari server.");
+    } finally {
+      setPricingLoading(false);
+    }
+  }, []);
+
+  const handleSavePricing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPricingSaving(true);
+    setPricingSuccess(false);
+    setPricingError("");
+
+    try {
+      const token = await getAuthToken();
+      const p = parseInt(inputPrice, 10);
+      const op = parseInt(inputOriginalPrice, 10);
+
+      if (isNaN(p) || p <= 0) {
+        throw new Error("Nominal harga jual harus berupa angka valid.");
+      }
+
+      const res = await fetch("/api/pricing", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ price: p, originalPrice: isNaN(op) ? undefined : op }),
+      });
+
+      const data = await parseJsonResponse(res, "Gagal memperbarui harga toko.");
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memperbarui harga toko.");
+      }
+
+      setCurrentPricing(data.pricing);
+      setPricingSuccess(true);
+      setTimeout(() => setPricingSuccess(false), 4000);
+    } catch (err: unknown) {
+      setPricingError(err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan harga.");
+    } finally {
+      setPricingSaving(false);
+    }
+  };
+
   useEffect(() => onAuthStateChanged(auth, (u) => {
     setUser(u);
     setAuthLoading(false);
@@ -138,8 +211,11 @@ export default function AdminPage() {
     setGeneratedCode("");
     setEditingAccount(null);
     setDeletingAccount(null);
-    if (u) void fetchAccounts();
-  }), [fetchAccounts]);
+    if (u) {
+      void fetchAccounts();
+      void fetchPricing();
+    }
+  }), [fetchAccounts, fetchPricing]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -431,25 +507,32 @@ export default function AdminPage() {
                   <Database size={24} className="text-emerald-400" />
                   Daftar Akun Tersimpan
                 </>
-              ) : (
+              ) : activeTab === "create" ? (
                 <>
                   <PlusCircle size={24} className="text-emerald-400" />
                   Tambah Akun Baru
+                </>
+              ) : (
+                <>
+                  <Tag size={24} className="text-emerald-400" />
+                  Pengaturan Harga Produk
                 </>
               )}
             </h2>
             <p className="text-slate-400 text-sm mt-1">
               {activeTab === "inventory"
                 ? "Kelola semua akun ChatGPT Plus Private (Lihat, Edit, Hapus, dan Salin Kode Klaim)."
-                : "Masukkan kredensial akun baru untuk dienkripsi permanen dan di-generate kode klaim."}
+                : activeTab === "create"
+                ? "Masukkan kredensial akun baru untuk dienkripsi permanen dan di-generate kode klaim."
+                : "Ubah harga jual produk ChatGPT Plus yang langsung tampil realtime di halaman checkout pembeli."}
             </p>
           </div>
 
           {/* Tab Switcher Buttons */}
-          <div className="flex items-center p-1 bg-[#0b1016] border border-slate-800 rounded-xl self-start sm:self-auto">
+          <div className="flex items-center p-1 bg-[#0b1016] border border-slate-800 rounded-xl self-start sm:self-auto flex-wrap gap-1">
             <button
               onClick={() => setActiveTab("inventory")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "inventory"
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/50"
                   : "text-slate-400 hover:text-white"
@@ -469,7 +552,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setActiveTab("create")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "create"
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/50"
                   : "text-slate-400 hover:text-white"
@@ -477,6 +560,23 @@ export default function AdminPage() {
             >
               <PlusCircle size={14} />
               <span>Tambah Akun</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("pricing");
+                void fetchPricing();
+              }}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "pricing"
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/50"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <DollarSign size={14} />
+              <span>Atur Harga</span>
+              <span className="text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                Rp {currentPricing.price.toLocaleString("id-ID")}
+              </span>
             </button>
           </div>
         </div>
@@ -884,6 +984,148 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 3: PENGATURAN HARGA REALTIME */}
+        {activeTab === "pricing" && (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="bg-[#0b1016] border border-slate-800 rounded-2xl p-6 sm:p-8">
+              <div className="flex items-center justify-between pb-5 border-b border-slate-800 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <Tag size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Atur Harga ChatGPT Plus Private</h3>
+                    <p className="text-xs text-slate-400">
+                      Perubahan harga tersimpan langsung dan otomatis tampil di halaman checkout pembeli.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void fetchPricing()}
+                  disabled={pricingLoading}
+                  className="p-2 bg-[#070b0e] hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Refresh harga terkini"
+                >
+                  <RefreshCw size={14} className={pricingLoading ? "animate-spin" : ""} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+              </div>
+
+              {/* Status Box */}
+              <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#070b0e] border border-slate-800/80 rounded-xl p-4">
+                  <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                    Harga Aktif Sekarang
+                  </span>
+                  <div className="text-2xl font-bold text-emerald-400 font-mono">
+                    Rp {currentPricing.price.toLocaleString("id-ID")}
+                  </div>
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    Diperbarui: {currentPricing.updatedAt ? new Date(currentPricing.updatedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB" : "Default"}
+                  </span>
+                </div>
+                <div className="bg-[#070b0e] border border-slate-800/80 rounded-xl p-4">
+                  <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                    Harga Coret (Referensi)
+                  </span>
+                  <div className="text-2xl font-bold text-slate-400 line-through font-mono">
+                    Rp {currentPricing.originalPrice.toLocaleString("id-ID")}
+                  </div>
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    Diskon: {Math.round((1 - currentPricing.price / currentPricing.originalPrice) * 100)}%
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSavePricing} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Nominal Harga Jual (Rupiah) <span className="text-emerald-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm">
+                      Rp
+                    </span>
+                    <input
+                      type="number"
+                      min="1000"
+                      max="10000000"
+                      step="1000"
+                      value={inputPrice}
+                      onChange={(e) => setInputPrice(e.target.value)}
+                      placeholder="75000"
+                      className="w-full pl-12 pr-4 py-2.5 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                      required
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Contoh: 75000 untuk Rp 75.000 atau 69000 untuk diskon promo.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Nominal Harga Coret / Normal (Opsional)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm">
+                      Rp
+                    </span>
+                    <input
+                      type="number"
+                      min="1000"
+                      max="20000000"
+                      step="1000"
+                      value={inputOriginalPrice}
+                      onChange={(e) => setInputOriginalPrice(e.target.value)}
+                      placeholder="150000"
+                      className="w-full pl-12 pr-4 py-2.5 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Ditampilkan sebagai harga coret di samping harga jual untuk menarik minat pembeli.
+                  </p>
+                </div>
+
+                {pricingError && (
+                  <div className="p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-300 text-xs flex items-center gap-2">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{pricingError}</span>
+                  </div>
+                )}
+
+                {pricingSuccess && (
+                  <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+                    <CheckCircle2 size={14} className="shrink-0" />
+                    <span>Harga produk berhasil disimpan! Halaman checkout dan format pesan WhatsApp kini otomatis menggunakan harga baru ini secara realtime.</span>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={pricingSaving}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer"
+                  >
+                    {pricingSaving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Menyimpan Perubahan Harga...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={16} />
+                        <span>Terapkan &amp; Update Harga Toko Realtime</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </main>

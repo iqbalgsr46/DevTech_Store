@@ -1,11 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { HARGA_PRIVATE, formatRupiah } from "@/lib/pricing";
+import { getStorePricing } from "@/lib/server/pricing-store";
+import { formatRupiah } from "@/lib/pricing";
 import ServerCheckout from "@/components/ServerCheckout";
 import styles from "./checkout-polish.module.css";
 
-export default function CheckoutPage() {
-  const price = formatRupiah(HARGA_PRIVATE[1]);
+export const dynamic = "force-dynamic";
+
+export default async function CheckoutPage() {
+  const storePricing = await getStorePricing();
+  const price = formatRupiah(storePricing.price);
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
