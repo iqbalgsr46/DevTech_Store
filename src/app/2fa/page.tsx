@@ -101,7 +101,7 @@ function TerminalContent() {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  // Real Kali Linux 35-Second Animation States
+  // Real Kali Linux 41-Second Animation States
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<string>("0.0");
   const [currentStepText, setCurrentStepText] = useState<string>("");
@@ -154,7 +154,7 @@ function TerminalContent() {
     }
   }, [logs, isExecuting]);
 
-  // Master Kali Linux 35-Second Decryption Execution
+  // Master Kali Linux 41-Second Decryption Execution
   const handleClaim = async (passcode: string) => {
     const cleanCode = passcode.trim();
     if (!cleanCode) return;
@@ -169,7 +169,7 @@ function TerminalContent() {
     setCurrentStepText("Memulai sesi klaim terminal...");
     setLogs([{ id: "prompt", type: "command", text: "┌──(user㉿kali)-[~/devtech]\n└─$ claim --code [disembunyikan]" }]);
 
-    const TOTAL_DURATION_MS = 35000; // Exact 35 seconds duration requested
+    const TOTAL_DURATION_MS = 41000; // Exact 41 seconds duration requested
     const startTime = Date.now();
 
     // 1. Kick off parallel backend fetch immediately
@@ -204,7 +204,7 @@ function TerminalContent() {
         return { failure: err instanceof Error ? err.message : "Klaim gagal." };
       });
 
-    // 2. Kali Linux 35-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
+    // 2. Kali Linux 41-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
     progressTimerRef.current = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.min(TOTAL_DURATION_MS, now - startTime);
@@ -242,13 +242,31 @@ function TerminalContent() {
       "[stage] email / password / 2FA panels queued",
       "[stage] ChatGPT login shortcut queued",
       "[stage] Support instructions queued",
-      "[wait] Finishing visual sequence ...............",
+      "$ account --describe-output",
+      "  ├─ email           string",
+      "  ├─ password        protected account field",
+      "  └─ secret2fa       Base32 seed",
+      "$ login --show-sequence",
+      "  [01] Open chatgpt.com",
+      "  [02] Enter account email",
+      "  [03] Enter account password",
+      "  [04] Continue until OTP is requested",
+      "  [05] Open 2fa.live in a separate tab",
+      "  [06] Paste the 2FA secret and select Submit",
+      "  [07] Read the six-digit OTP",
+      "  [08] Return to ChatGPT and enter OTP",
+      "$ session --privacy",
+      "  claim_code         redacted",
+      "  terminal_history   sensitive input hidden",
+      "  account_output     requires server confirmation",
+      "$ result --await",
+      "[wait] account response pending presentation...",
       "[wait] Awaiting verified claim result from store server...",
     ];
     let nextAt = 400;
     script.forEach((line, index) => {
       const beginAt = nextAt;
-      nextAt += 940 + (index % 4) * 140;
+      nextAt += (TOTAL_DURATION_MS - 1400) / script.length + ((index % 4) - 1.5) * 70;
       const id = `shell-${index}`;
       const chunks = Math.ceil(line.length / 4);
       for (let chunk = 1; chunk <= chunks; chunk++) {
@@ -266,12 +284,12 @@ function TerminalContent() {
       }
     });
 
-    // 4. Final Milestone at Exactly 35 Seconds (35000ms)
+    // 4. Final Milestone at Exactly 41 Seconds (41000ms)
     const finalTimeout = setTimeout(async () => {
       if (controller.signal.aborted) return;
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       setLoadingProgress(100);
-      setElapsedSeconds("35.0");
+      setElapsedSeconds("41.0");
 
       try {
         const account = await apiPromise;
@@ -283,8 +301,8 @@ function TerminalContent() {
           {
             id: "kali-success-header",
             type: "success",
-            text: `[  OK  ] ANIMASI SELESAI. Server mengonfirmasi klaim.
-[+] Membuka vault akun ChatGPT Plus Private:`,
+            text: `[OK] claim verified
+            [+] account ready`,
           },
           {
             id: "account-card-" + Date.now(),
@@ -300,7 +318,7 @@ function TerminalContent() {
           {
             id: "kali-fail-header",
             type: "error",
-            text: `[FAIL] CLAIM FAILED (Total elapsed: 35.0s)
+            text: `[FAIL] CLAIM FAILED (Total elapsed: 41.0s)
 [-] Error: ${errMsg}
 [-] Silakan periksa kembali kode lisensi Anda atau hubungi admin WhatsApp toko.`,
           },
