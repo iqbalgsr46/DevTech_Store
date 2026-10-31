@@ -111,7 +111,7 @@ export function claimBackend() {
   if (backend === 'local' && process.env.NODE_ENV === 'production' && (!process.env.CLAIMS_DATA_DIR || !path.isAbsolute(process.env.CLAIMS_DATA_DIR))) throw new Error('Not configured');
   {
     const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
-    const db = backend === 'firestore' ? getFirestore(app) : null;
+    const db = backend === 'firestore' ? (process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app)) : null;
     const store: ClaimStore = db ? {
       async insert(hash, record) { await db.collection('privateAccountClaims').doc(hash).create(record); },
       async update(hash, patch) { await db.collection('privateAccountClaims').doc(hash).update({ sealed: patch.sealed }); },

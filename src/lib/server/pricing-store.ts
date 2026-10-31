@@ -35,7 +35,7 @@ export async function getStorePricing(): Promise<StorePricing> {
   if (FIREBASE_SERVICE_ACCOUNT_JSON && process.env.CLAIM_STORAGE_BACKEND === 'firestore') {
     try {
       const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
-      const db = getFirestore(app);
+      const db = process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app);
       const doc = await db.collection('storeSettings').doc('pricing').get();
       if (doc.exists) {
         const data = doc.data() as StorePricing;
@@ -85,7 +85,7 @@ export async function updateStorePricing(newPrice: number, originalPrice?: numbe
   if (FIREBASE_SERVICE_ACCOUNT_JSON && process.env.CLAIM_STORAGE_BACKEND === 'firestore') {
     try {
       const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
-      const db = getFirestore(app);
+      const db = process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app);
       await db.collection('storeSettings').doc('pricing').set(updated, { merge: true });
     } catch {
       // Continue to local save
