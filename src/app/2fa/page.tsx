@@ -111,6 +111,7 @@ function TerminalContent() {
   const [spinnerIndex, setSpinnerIndex] = useState<number>(0);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const accountCardRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCopy = (text: string, id: string) => {
@@ -156,6 +157,13 @@ function TerminalContent() {
 
   // Auto-scroll terminal cleanly when logs update
   useEffect(() => {
+    const hasCard = logs.some((l) => l.type === "chatgpt-card");
+    if (hasCard) {
+      const timer = setTimeout(() => {
+        accountCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
     if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 180) {
       terminalEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
@@ -748,12 +756,13 @@ function TerminalContent() {
             return (
               <div
                 key={log.id}
-                className="my-3 rounded-xl border border-emerald-500/80 bg-[#07100c] p-3.5 sm:p-5 shadow-2xl shadow-emerald-950/50 space-y-3.5 animate-in fade-in zoom-in duration-300 max-w-full overflow-hidden"
+                ref={accountCardRef}
+                className="my-3 rounded-xl border border-emerald-500/80 bg-[#07100c] p-3.5 sm:p-5 shadow-2xl shadow-emerald-950/50 space-y-3.5 animate-in fade-in zoom-in duration-300 max-w-full overflow-hidden scroll-mt-14"
               >
                 <div className="flex items-center justify-between flex-wrap gap-2 border-b border-emerald-500/30 pb-3 pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-emerald-400 text-black font-black text-xs shrink-0">
-                      ✓
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#10a37f]/20 border border-[#10a37f]/40 p-1 shrink-0">
+                      <Image src="/chatgpt-logo.svg" alt="Logo ChatGPT" width={18} height={18} className="w-[18px] h-[18px] object-contain" />
                     </span>
                     <div>
                       <h4 className="font-bold text-white text-sm sm:text-base leading-snug">
