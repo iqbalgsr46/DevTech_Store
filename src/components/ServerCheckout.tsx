@@ -25,6 +25,10 @@ export default function ServerCheckout({ className }: { className: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: "chatgpt-plus-private-1m", idempotencyKey }),
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server checkout sedang sibuk atau belum siap. Silakan coba sesaat lagi.");
+      }
       const data = await response.json();
       if (!response.ok || typeof data.order?.id !== "string" || typeof data.receiptPath !== "string" || !/^\/orders\/[A-Za-z0-9_-]+$/.test(data.receiptPath)) throw new Error(data.error || "Gagal menerima bukti pesanan. Coba lagi untuk memulihkan pesanan yang sama.");
       const message = [

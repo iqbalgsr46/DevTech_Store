@@ -158,6 +158,14 @@ function TerminalContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "claim", code: passcode.trim() }),
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          response.status === 404
+            ? "[-] Kode klaim tidak valid atau belum terdaftar."
+            : "[-] Server sedang dalam pemeliharaan. Silakan hubungi admin WhatsApp."
+        );
+      }
       const data = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok || typeof data.account?.email !== "string" || typeof data.account?.password !== "string" || typeof data.account?.secret2fa !== "string") {

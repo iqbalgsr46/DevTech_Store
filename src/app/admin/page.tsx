@@ -96,6 +96,23 @@ export default function AdminPage() {
     return auth.currentUser.getIdToken();
   };
 
+  const parseJsonResponse = async (res: Response, fallbackError: string) => {
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await res.text();
+      if (res.status === 404) throw new Error("Endpoint API tidak ditemukan (404). Pastikan server berjalan dengan benar.");
+      if (res.status === 503) throw new Error("Layanan klaim belum tersedia (503). Periksa konfigurasi environment server.");
+      if (res.status === 401) throw new Error("Sesi login admin tidak valid atau telah kedaluwarsa. Silakan login ulang.");
+      if (res.status === 403) throw new Error("Akses ditolak (403). Akun Anda belum terdaftar di daftar admin (CLAIM_ADMIN_UIDS).");
+      throw new Error(`Server merespons status ${res.status}: ${text.slice(0, 80) || fallbackError}`);
+    }
+    try {
+      return await res.json();
+    } catch {
+      throw new Error(fallbackError);
+    }
+  };
+
   const fetchAccounts = useCallback(async () => {
     setLoadingAccounts(true);
     try {
@@ -104,8 +121,8 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
-      const data = await res.json();
-      if (!res.ok || !Array.isArray(data.accounts)) throw new Error(data.error || "Gagal memuat akun.");
+      const data = await parseJsonResponse(res, "Gagal memuat akun dari server.");
+      if (!res.ok || !Array.isArray(data.accounts)) throw new Error(data?.error || "Gagal memuat akun.");
       if (auth.currentUser) setAccounts(data.accounts);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Gagal memuat akun.");
@@ -164,7 +181,7 @@ export default function AdminPage() {
         }),
       });
 
-      const result = await response.json();
+      const result = await parseJsonResponse(response, "Gagal menyimpan akun.");
       if (!response.ok) {
         throw new Error(result.error || "Gagal menyimpan akun.");
       }
@@ -220,7 +237,7 @@ export default function AdminPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await parseJsonResponse(res, "Gagal memperbarui akun.");
       if (!res.ok) {
         throw new Error(data.error || "Gagal memperbarui akun.");
       }
@@ -254,7 +271,7 @@ export default function AdminPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await parseJsonResponse(res, "Gagal menghapus akun.");
       if (!res.ok) {
         throw new Error(data.error || "Gagal menghapus akun.");
       }
