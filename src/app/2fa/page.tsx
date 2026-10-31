@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ClaimCodeRain from "@/components/ClaimCodeRain";
-import transitionStyles from "./claim-transition.module.css";
+import transitionStyles from "../claim-transition.module.css";
 import Link from "next/link";
 import {
   Terminal as TerminalIcon,
