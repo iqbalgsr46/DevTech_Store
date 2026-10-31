@@ -101,7 +101,7 @@ function TerminalContent() {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  // Real Kali Linux 25-Second Animation States
+  // Real Kali Linux 27-Second Animation States
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<string>("0.0");
   const [currentStepText, setCurrentStepText] = useState<string>("");
@@ -149,10 +149,12 @@ function TerminalContent() {
 
   // Auto-scroll terminal cleanly when logs update
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 180) {
+      terminalEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }
   }, [logs, isExecuting]);
 
-  // Master Kali Linux 25-Second Decryption Execution
+  // Master Kali Linux 27-Second Decryption Execution
   const handleClaim = async (passcode: string) => {
     const cleanCode = passcode.trim();
     if (!cleanCode) return;
@@ -164,10 +166,10 @@ function TerminalContent() {
     setIsExecuting(true);
     setLoadingProgress(0);
     setElapsedSeconds("0.0");
-    setCurrentStepText("Inisialisasi modul kriptografi Kali Linux kernel...");
+    setCurrentStepText("Memulai sesi klaim terminal...");
     setLogs([{ id: "prompt", type: "command", text: "┌──(user㉿kali)-[~/devtech]\n└─$ claim --code [disembunyikan]" }]);
 
-    const TOTAL_DURATION_MS = 25000; // Exact 25 seconds duration requested
+    const TOTAL_DURATION_MS = 27000; // Exact 27 seconds duration requested
     const startTime = Date.now();
 
     // 1. Kick off parallel backend fetch immediately
@@ -202,43 +204,74 @@ function TerminalContent() {
         return { failure: err instanceof Error ? err.message : "Klaim gagal." };
       });
 
-    // 2. Kali Linux 25-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
+    // 2. Kali Linux 27-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
     progressTimerRef.current = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.min(TOTAL_DURATION_MS, now - startTime);
       const pct = Math.min(100, (elapsed / TOTAL_DURATION_MS) * 100);
-      setLoadingProgress(Math.floor(pct));
+      setLoadingProgress(pct);
       setElapsedSeconds((elapsed / 1000).toFixed(1));
       setSpinnerIndex((prev) => (prev + 1) % SPINNER_FRAMES.length);
     }, 50);
 
-    // 3. Staggered Authentic Kali Linux Logs across the 25 Seconds
-    const timeline = [
-      { delay: 0, step: "Membuka sesi terminal..." },
-      { delay: 1800, step: "Permintaan klaim dikirim ke server toko." },
-      { delay: 4700, step: "Animasi terminal berjalan; kode klaim disembunyikan." },
-      { delay: 8100, step: "Menyiapkan tampilan hasil akun..." },
-      { delay: 12300, step: "Hasil hanya ditampilkan setelah konfirmasi server." },
-      { delay: 16900, step: "Menyiapkan panel email, password, dan 2FA..." },
-      { delay: 21300, step: "Menyelesaikan animasi terminal..." },
-      { delay: 24300, step: "Menunggu hasil validasi akhir..." },
+    // Decorative shell transcript; never represents remote commands or entitlement checks.
+    const script = [
+      "[boot] DEVTECH / ACCOUNT CLAIM CLIENT v2.0",
+      "[info] Kali-style visual session • bukan shell sistem operasi",
+      "$ devtech claim --product chatgpt-plus --code [REDACTED]",
+      "[send] POST /api/claims  content-type: application/json",
+      "[privacy] claim_code     : [hidden from terminal output]",
+      "[privacy] credentials    : [display after server confirmation]",
+      "[config] product        : ChatGPT Plus",
+      "[config] session        : browser / ephemeral view",
+      "[config] output         : account card + copy actions",
+      "$ render --theme kali-dark --palette blue,cyan,green",
+      "[ui] Loading terminal renderer ................ ready",
+      "[ui] Preparing account output layout ........... ready",
+      "[ui] Attaching clipboard controls .............. ready",
+      "[ui] Preparing email field ..................... ready",
+      "[ui] Preparing password field .................. ready",
+      "[ui] Preparing two-factor instructions ......... ready",
+      "$ policy --show-output-rules",
+      "  ├─ source        server response only",
+      "  ├─ claim code    never printed",
+      "  ├─ credentials   no generated fallback",
+      "  ├─ invalid code  show server error",
+      "  └─ model access  not checked by this terminal",
+      "$ view --prepare account-details",
+      "[stage] email / password / 2FA panels queued",
+      "[stage] ChatGPT login shortcut queued",
+      "[stage] Support instructions queued",
+      "[wait] Finishing visual sequence ...............",
+      "[wait] Awaiting verified claim result from store server...",
     ];
-
-    timeline.forEach((item) => {
-      const timeout = setTimeout(() => {
-        if (controller.signal.aborted) return;
-        setCurrentStepText(item.step);
-        setLogs((p) => [...p, { id: `stage-${item.delay}`, type: "output", text: `[${(item.delay / 1000).toFixed(1)}s] ${item.step}` }]);
-      }, item.delay);
-      timeoutsRef.current.push(timeout);
+    let nextAt = 400;
+    script.forEach((line, index) => {
+      const beginAt = nextAt;
+      nextAt += 680 + (index % 4) * 110;
+      const id = `shell-${index}`;
+      const chunks = Math.ceil(line.length / 4);
+      for (let chunk = 1; chunk <= chunks; chunk++) {
+        const timer = setTimeout(() => {
+          if (controller.signal.aborted) return;
+          setCurrentStepText(line);
+          const entry: LogEntry = { id, type: "output", text: line.slice(0, chunk * 4) };
+          setLogs((previous) => {
+            const position = previous.findIndex((item) => item.id === id);
+            if (position === -1) return [...previous, entry];
+            return previous.map((item) => item.id === id ? entry : item);
+          });
+        }, beginAt + chunk * (10 + index % 5));
+        timeoutsRef.current.push(timer);
+      }
     });
 
-    // 4. Final Milestone at Exactly 25 Seconds (25000ms)
+    // 4. Final Milestone at Exactly 27 Seconds (27000ms)
     const finalTimeout = setTimeout(async () => {
       if (controller.signal.aborted) return;
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       setLoadingProgress(100);
-      setElapsedSeconds("25.0");
+      setElapsedSeconds("27.0");
 
       try {
         const account = await apiPromise;
@@ -267,7 +300,7 @@ function TerminalContent() {
           {
             id: "kali-fail-header",
             type: "error",
-            text: `[FAIL] DECRYPTION FAILED (Total elapsed: 25.0s)
+            text: `[FAIL] CLAIM FAILED (Total elapsed: 27.0s)
 [-] Error: ${errMsg}
 [-] Silakan periksa kembali kode lisensi Anda atau hubungi admin WhatsApp toko.`,
           },
@@ -623,7 +656,7 @@ function TerminalContent() {
 
       {/* Terminal Main Canvas */}
       <main className="flex-1 p-3 sm:p-5 text-[11px] sm:text-[13px] leading-relaxed text-slate-300 space-y-3 font-mono pb-16 max-w-full overflow-x-hidden">
-        {/* Dynamic Kali Linux 25-Second HUD Box */}
+        {/* Dynamic Kali Linux 27-Second HUD Box */}
         {isExecuting && (
           <div className="bg-[#0b1411] border border-emerald-500/50 rounded-xl p-3 sm:p-4 my-2 shadow-2xl shadow-emerald-950/60 transition duration-300">
             {/* Header info */}
@@ -641,10 +674,10 @@ function TerminalContent() {
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-[11px] sm:text-xs font-mono">
                 <span className="text-white font-bold">
-                  PROGRESS [{loadingProgress}%]
+                  PROGRESS [{Math.floor(loadingProgress)}%]
                 </span>
                 <span className="text-emerald-400 font-bold font-mono">
-                  {elapsedSeconds}s / 25.0s
+                  {elapsedSeconds}s / 27.0s
                 </span>
               </div>
 
@@ -683,7 +716,7 @@ function TerminalContent() {
           if (log.type === "command") {
             return (
               <div key={log.id} className="flex items-center gap-2 text-emerald-400 font-semibold pt-2">
-                <span>{log.text}</span>
+                <span className="whitespace-pre-wrap text-[#5eafff]">{log.text}</span>
               </div>
             );
           }
@@ -821,8 +854,13 @@ function TerminalContent() {
             );
           }
 
+          const shellColor = log.id.startsWith("shell-")
+            ? log.text?.startsWith("$") ? "#5eafff"
+              : log.text?.startsWith("[privacy]") || log.text?.startsWith("[wait]") ? "#e5c07b"
+              : log.text?.startsWith("[ui]") ? "#98c379" : "#56b6c2"
+            : undefined;
           return (
-            <div key={log.id} className="text-slate-300 animate-in fade-in slide-in-from-left-2 duration-200">
+            <div key={log.id} style={{ color: shellColor }} className="text-slate-300 animate-in fade-in duration-150">
               <pre className="whitespace-pre-wrap font-mono text-xs sm:text-sm">{log.text}</pre>
             </div>
           );
@@ -831,7 +869,7 @@ function TerminalContent() {
         {isExecuting ? (
           <div className="flex items-center gap-2 text-emerald-400 text-xs py-2 animate-pulse">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="font-mono">Permintaan sedang diproses. Belum ada hasil dari server.</span>
+            <span className="font-mono">Animasi sesi klaim berjalan. Hasil mengikuti respons server.</span>
             <span className="inline-block animate-ping text-emerald-300">_</span>
           </div>
         ) : (
