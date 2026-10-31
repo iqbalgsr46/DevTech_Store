@@ -101,7 +101,7 @@ function TerminalContent() {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
-  // Real Kali Linux 27-Second Animation States
+  // Real Kali Linux 35-Second Animation States
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<string>("0.0");
   const [currentStepText, setCurrentStepText] = useState<string>("");
@@ -154,7 +154,7 @@ function TerminalContent() {
     }
   }, [logs, isExecuting]);
 
-  // Master Kali Linux 27-Second Decryption Execution
+  // Master Kali Linux 35-Second Decryption Execution
   const handleClaim = async (passcode: string) => {
     const cleanCode = passcode.trim();
     if (!cleanCode) return;
@@ -169,7 +169,7 @@ function TerminalContent() {
     setCurrentStepText("Memulai sesi klaim terminal...");
     setLogs([{ id: "prompt", type: "command", text: "┌──(user㉿kali)-[~/devtech]\n└─$ claim --code [disembunyikan]" }]);
 
-    const TOTAL_DURATION_MS = 27000; // Exact 27 seconds duration requested
+    const TOTAL_DURATION_MS = 35000; // Exact 35 seconds duration requested
     const startTime = Date.now();
 
     // 1. Kick off parallel backend fetch immediately
@@ -204,7 +204,7 @@ function TerminalContent() {
         return { failure: err instanceof Error ? err.message : "Klaim gagal." };
       });
 
-    // 2. Kali Linux 27-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
+    // 2. Kali Linux 35-Second Real-Time Smooth Counter & Spinner Interval (updates every 50ms)
     progressTimerRef.current = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.min(TOTAL_DURATION_MS, now - startTime);
@@ -248,7 +248,7 @@ function TerminalContent() {
     let nextAt = 400;
     script.forEach((line, index) => {
       const beginAt = nextAt;
-      nextAt += 680 + (index % 4) * 110;
+      nextAt += 940 + (index % 4) * 140;
       const id = `shell-${index}`;
       const chunks = Math.ceil(line.length / 4);
       for (let chunk = 1; chunk <= chunks; chunk++) {
@@ -266,12 +266,12 @@ function TerminalContent() {
       }
     });
 
-    // 4. Final Milestone at Exactly 27 Seconds (27000ms)
+    // 4. Final Milestone at Exactly 35 Seconds (35000ms)
     const finalTimeout = setTimeout(async () => {
       if (controller.signal.aborted) return;
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       setLoadingProgress(100);
-      setElapsedSeconds("27.0");
+      setElapsedSeconds("35.0");
 
       try {
         const account = await apiPromise;
@@ -300,7 +300,7 @@ function TerminalContent() {
           {
             id: "kali-fail-header",
             type: "error",
-            text: `[FAIL] CLAIM FAILED (Total elapsed: 27.0s)
+            text: `[FAIL] CLAIM FAILED (Total elapsed: 35.0s)
 [-] Error: ${errMsg}
 [-] Silakan periksa kembali kode lisensi Anda atau hubungi admin WhatsApp toko.`,
           },
@@ -648,7 +648,7 @@ function TerminalContent() {
             onClick={() => router.push("/")}
             className="flex items-center gap-1 rounded bg-slate-800/80 px-2.5 py-1 text-slate-300 hover:bg-slate-700 text-[11px] sm:text-xs transition active:scale-95"
           >
-            <ArrowLeft size={12} />
+            
             <span className="hidden sm:inline">Toko</span>
           </button>
         </div>
@@ -656,51 +656,6 @@ function TerminalContent() {
 
       {/* Terminal Main Canvas */}
       <main className="flex-1 p-3 sm:p-5 text-[11px] sm:text-[13px] leading-relaxed text-slate-300 space-y-3 font-mono pb-16 max-w-full overflow-x-hidden">
-        {/* Dynamic Kali Linux 27-Second HUD Box */}
-        {isExecuting && (
-          <div className="bg-[#0b1411] border border-emerald-500/50 rounded-xl p-3 sm:p-4 my-2 shadow-2xl shadow-emerald-950/60 transition duration-300">
-            {/* Header info */}
-            <div className="flex flex-wrap items-center justify-between text-[10px] sm:text-xs gap-1 pb-2 border-b border-emerald-500/20 text-emerald-400">
-              <span className="font-bold flex items-center gap-1.5">
-                <span className="text-emerald-300 font-mono">{SPINNER_FRAMES[spinnerIndex]}</span>
-                DEVTECH TERMINAL
-              </span>
-              <span className="text-slate-400 font-mono text-[10px] sm:text-[11px]">
-                Animasi bergaya Kali Linux
-              </span>
-            </div>
-
-            {/* Dynamic Real-Time Visual Progress Bar */}
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center justify-between text-[11px] sm:text-xs font-mono">
-                <span className="text-white font-bold">
-                  PROGRESS [{Math.floor(loadingProgress)}%]
-                </span>
-                <span className="text-emerald-400 font-bold font-mono">
-                  {elapsedSeconds}s / 27.0s
-                </span>
-              </div>
-
-              <div className="w-full bg-[#040806] border border-emerald-500/40 rounded-full h-3 overflow-hidden p-0.5">
-                <div
-                  className="bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 h-full rounded-full transition-all duration-75 ease-linear shadow-[0_0_12px_rgba(52,211,153,0.8)]"
-                  style={{ width: `${loadingProgress}%` }}
-                />
-              </div>
-
-              {/* Real-time Subsystem stage display */}
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 pt-1">
-                <span className="truncate text-emerald-300">
-                  &gt; {currentStepText}
-                </span>
-                <span className="shrink-0 text-amber-400 font-bold font-mono pl-2 animate-pulse">
-                  LOADING...
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {logs.map((log) => {
           if (log.type === "banner") {
             return (
@@ -759,9 +714,9 @@ function TerminalContent() {
                     </span>
                     <div>
                       <h4 className="font-bold text-white text-sm sm:text-base leading-snug">
-                        Akun ChatGPT Plus Private (Hak Milik)
+                        Akun ChatGPT Plus Private
                       </h4>
-                      <p className="text-[11px] text-emerald-400 mt-0.5">Status: <span className="text-white font-semibold">Tervalidasi Database</span></p>
+
                     </div>
                   </div>
                   <span className="text-[10px] sm:text-xs font-bold text-emerald-300 bg-emerald-950/90 border border-emerald-500/50 rounded px-2.5 py-1">
@@ -828,8 +783,8 @@ function TerminalContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-400 hover:bg-amber-300 active:scale-95 px-4 py-2.5 font-bold text-black transition text-xs"
                   >
-                    <ExternalLink size={14} />
-                    <span>BUKA 2FA.LIVE (AMBIL KODE 6-DIGIT) ↗</span>
+                    
+                    <span>BUKA 2FA.LIVE (AMBIL KODE 6-DIGIT)</span>
                   </a>
 
                   <a
@@ -839,16 +794,17 @@ function TerminalContent() {
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 active:scale-95 px-4 py-2.5 font-bold text-black transition text-xs"
                   >
                     <MessageSquare size={14} />
-                    <span>BUKA CHATGPT.COM (LOGIN) ↗</span>
+                    <span>BUKA CHATGPT.COM (LOGIN)</span>
                   </a>
                 </div>
 
                 <div className="rounded-lg bg-[#040806] border border-[#1b3124] p-3 text-[11px] leading-relaxed text-slate-300 space-y-1 font-mono">
-                  <p className="text-emerald-300 font-semibold">💡 Panduan Login & Hak Milik:</p>
-                  <p>1. Salin <b className="text-amber-300">2FA Secret Key</b> di atas.</p>
-                  <p>2. Buka <b className="text-amber-300">2fa.live</b> &rarr; tempel ke kolom &apos;2FA Secret&apos; &rarr; klik &apos;Submit&apos;.</p>
-                  <p>3. Masukkan 6 angka OTP yang didapat ke verifikasi ChatGPT.</p>
-                  <p className="text-emerald-300 font-semibold">4. Akun private dengan password yang bisa Anda ganti setelah login.</p>
+                  <p className="text-emerald-300 font-semibold">Panduan Login:</p>
+                  <p>1. Buka <b>chatgpt.com</b>, lalu login menggunakan <b>email dan password</b> akun di atas.</p>
+                  <p>2. Lanjutkan sampai ChatGPT meminta <b>kode verifikasi OTP</b>.</p>
+                  <p>3. Salin <b className="text-amber-300">2FA Secret Key</b> di atas, lalu buka <b className="text-amber-300">2fa.live</b>.</p>
+                  <p>4. Tempel kunci tersebut ke kolom <b>2FA Secret</b>, lalu klik <b>Submit</b> untuk mendapatkan OTP 6 digit.</p>
+                  <p>5. Kembali ke ChatGPT dan masukkan <b>OTP 6 digit</b> tersebut untuk menyelesaikan login ChatGPT Plus.</p>
                 </div>
               </div>
             );
