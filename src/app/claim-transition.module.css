@@ -1,0 +1,5 @@
+.enter{animation:enter .5s ease-out both;}
+.spinner{display:block;width:36px;height:36px;border:2px solid #1c3930;border-top-color:#34d399;border-radius:50%;animation:spin 1.2s linear infinite;}
+@keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.enter,.spinner{animation:none}}

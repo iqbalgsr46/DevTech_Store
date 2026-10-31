@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ClaimCodeRain from "@/components/ClaimCodeRain";
+import transitionStyles from "./claim-transition.module.css";
 import Link from "next/link";
 import {
   Terminal as TerminalIcon,
@@ -91,6 +92,7 @@ const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", 
 function TerminalContent() {
   const router = useRouter();
   const [activeCode, setActiveCode] = useState<string>("");
+  const [isPreparing, setIsPreparing] = useState(false);
   const [gateInput, setGateInput] = useState<string>("");
   const [gateError, setGateError] = useState<string | null>(null);
 
@@ -128,7 +130,11 @@ function TerminalContent() {
     setGateError(null);
     setActiveCode(trimmed);
     setGateInput("");
-    void handleClaim(trimmed);
+    setIsPreparing(true);
+    timeoutsRef.current.push(setTimeout(() => {
+      setIsPreparing(false);
+      void handleClaim(trimmed);
+    }, 4000));
   };
 
   const requestRef = useRef<AbortController | null>(null);
@@ -573,7 +579,7 @@ function TerminalContent() {
 
   if (!activeCode) {
     return (
-      <div className="relative isolate min-h-dvh bg-[#080d10] text-[#edf3ef] flex flex-col font-sans">
+      <div className={`${transitionStyles.enter} relative isolate min-h-dvh bg-[#080d10] text-[#edf3ef] flex flex-col font-sans`}>
         <ClaimCodeRain />
         <header className="relative z-10 bg-[#080d10]/85 min-h-16 border-b border-[#23302b] px-4 sm:px-8 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -619,9 +625,26 @@ function TerminalContent() {
     );
   }
 
+  if (isPreparing) {
+    return (
+      <div key="preparing" className={`${transitionStyles.enter} relative isolate min-h-dvh bg-[#080d10] flex items-center justify-center px-6 text-slate-200`}>
+        <ClaimCodeRain />
+        <div role="status" aria-live="polite" className="relative z-10 flex flex-col items-center gap-6 font-mono text-sm">
+          <span aria-hidden="true" className={transitionStyles.spinner} />
+          <p><span className="text-cyan-400">terminal:</span> starting session</p>
+          <button type="button" className="min-h-11 px-5 text-xs text-slate-400 hover:text-white" onClick={() => {
+            clearAllTimers();
+            setIsPreparing(false);
+            setActiveCode("");
+          }}>Batal</button>
+        </div>
+      </div>
+    );
+  }
+
   // Screen 2: Real Kali Linux Terminal Screen
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full max-w-full flex flex-col bg-[#070b0e] font-mono text-slate-200 select-text overflow-x-hidden">
+    <div key="terminal" className={`${transitionStyles.enter} min-h-screen min-h-[100dvh] w-full max-w-full flex flex-col bg-[#070b0e] font-mono text-slate-200 select-text overflow-x-hidden`}>
       {/* Kali Linux Window Title Bar */}
       <header className="sticky top-0 z-30 flex h-11 shrink-0 items-center justify-between border-b border-[#1c2923] bg-[#091014]/95 backdrop-blur px-3 sm:px-4 select-none">
         <div className="flex items-center gap-2 min-w-0">
