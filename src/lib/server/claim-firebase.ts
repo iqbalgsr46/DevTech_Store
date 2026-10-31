@@ -106,7 +106,16 @@ export function claimBackend() {
   const { FIREBASE_SERVICE_ACCOUNT_JSON, CLAIM_ENCRYPTION_KEY, CLAIM_ADMIN_UIDS, CLAIM_FIRESTORE_RULES_CONFIRMED } = process.env;
   const backend = process.env.CLAIM_STORAGE_BACKEND;
   const allowed = (CLAIM_ADMIN_UIDS || '').split(',').map(uid => uid.trim()).filter(Boolean);
-  if (!FIREBASE_SERVICE_ACCOUNT_JSON || !/^[a-f0-9]{64}$/i.test(CLAIM_ENCRYPTION_KEY || '') || !allowed.length || !['local', 'firestore'].includes(backend || '')) throw new Error('Not configured');
+  if (!FIREBASE_SERVICE_ACCOUNT_JSON || !/^[a-f0-9]{64}$/i.test(CLAIM_ENCRYPTION_KEY || '') || !allowed.length || !['local', 'firestore'].includes(backend || '')) {
+    console.error('claimBackend config check failed:', {
+      hasSA: Boolean(FIREBASE_SERVICE_ACCOUNT_JSON),
+      keyValid: /^[a-f0-9]{64}$/i.test(CLAIM_ENCRYPTION_KEY || ''),
+      keyLen: CLAIM_ENCRYPTION_KEY?.length,
+      allowedCount: allowed.length,
+      backend
+    });
+    throw new Error('Not configured');
+  }
   if (backend === 'firestore' && CLAIM_FIRESTORE_RULES_CONFIRMED !== 'true') throw new Error('Not configured');
   if (backend === 'local' && process.env.NODE_ENV === 'production' && (!process.env.CLAIMS_DATA_DIR || !path.isAbsolute(process.env.CLAIMS_DATA_DIR))) throw new Error('Not configured');
   {

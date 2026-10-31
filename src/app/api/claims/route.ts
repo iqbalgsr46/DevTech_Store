@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     const account = await retrieveClaim(body.code, backend.store, backend.key);
     return Response.json({ account }, { headers });
   } catch (error) {
+    console.error('Claims API POST error:', error);
     const message = error instanceof Error ? error.message : '';
     const statuses: Record<string, number> = { 'Unauthorized': 401, 'Forbidden': 403, 'Invalid request': 400, 'Invalid account': 400, 'Invalid claim': 404, 'Rate limited': 429 };
     const status = statuses[message] || 503;
@@ -93,6 +94,7 @@ export async function GET(request: Request) {
     }
     return Response.json({ accounts }, { headers });
   } catch (error) {
+    console.error('Claims API GET error:', error);
     const message = error instanceof Error ? error.message : '';
     const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : message === 'Rate limited' ? 429 : 503;
     return Response.json({ error: status === 503 ? 'Layanan klaim belum tersedia. Hubungi admin.' : message }, { status, headers });
