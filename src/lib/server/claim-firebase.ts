@@ -101,6 +101,18 @@ function checkLocalRateLimit(bucket: string, limit: number): void {
   entry.count += 1;
 }
 
+function parseServiceAccount(raw: string) {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{')) {
+    return JSON.parse(trimmed);
+  }
+  try {
+    return JSON.parse(Buffer.from(trimmed, 'base64').toString('utf8'));
+  } catch {
+    return JSON.parse(trimmed);
+  }
+}
+
 // Separate from the legacy client-readable RTDB settings/redeemLinks tree.
 export function claimBackend() {
   const { FIREBASE_SERVICE_ACCOUNT_JSON, CLAIM_ENCRYPTION_KEY, CLAIM_ADMIN_UIDS, CLAIM_FIRESTORE_RULES_CONFIRMED } = process.env;
@@ -119,7 +131,8 @@ export function claimBackend() {
   if (backend === 'firestore' && CLAIM_FIRESTORE_RULES_CONFIRMED !== 'true') throw new Error('Not configured');
   if (backend === 'local' && process.env.NODE_ENV === 'production' && (!process.env.CLAIMS_DATA_DIR || !path.isAbsolute(process.env.CLAIMS_DATA_DIR))) throw new Error('Not configured');
   {
-    const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
+    const sa = parseServiceAccount(FIREBASE_SERVICE_ACCOUNT_JSON);
+    const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(sa) }, 'private-claims');
     const db = backend === 'firestore' ? (process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app)) : null;
     const store: ClaimStore = db ? {
       async insert(hash, record) { await db.collection('privateAccountClaims').doc(hash).create(record); },

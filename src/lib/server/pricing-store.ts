@@ -30,11 +30,24 @@ function getPricingFilePath(): string {
   return path.join(process.cwd(), '.data', 'pricing.json');
 }
 
+function parseServiceAccount(raw: string) {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{')) {
+    return JSON.parse(trimmed);
+  }
+  try {
+    return JSON.parse(Buffer.from(trimmed, 'base64').toString('utf8'));
+  } catch {
+    return JSON.parse(trimmed);
+  }
+}
+
 export async function getStorePricing(): Promise<StorePricing> {
   const { FIREBASE_SERVICE_ACCOUNT_JSON } = process.env;
   if (FIREBASE_SERVICE_ACCOUNT_JSON && process.env.CLAIM_STORAGE_BACKEND === 'firestore') {
     try {
-      const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
+      const sa = parseServiceAccount(FIREBASE_SERVICE_ACCOUNT_JSON);
+      const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(sa) }, 'private-claims');
       const db = process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app);
       const doc = await db.collection('storeSettings').doc('pricing').get();
       if (doc.exists) {
@@ -84,7 +97,8 @@ export async function updateStorePricing(newPrice: number, originalPrice?: numbe
   const { FIREBASE_SERVICE_ACCOUNT_JSON } = process.env;
   if (FIREBASE_SERVICE_ACCOUNT_JSON && process.env.CLAIM_STORAGE_BACKEND === 'firestore') {
     try {
-      const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON)) }, 'private-claims');
+      const sa = parseServiceAccount(FIREBASE_SERVICE_ACCOUNT_JSON);
+      const app = getApps().find(a => a.name === 'private-claims') || initializeApp({ credential: cert(sa) }, 'private-claims');
       const db = process.env.FIREBASE_DATABASE_ID ? getFirestore(app, process.env.FIREBASE_DATABASE_ID) : getFirestore(app);
       await db.collection('storeSettings').doc('pricing').set(updated, { merge: true });
     } catch {

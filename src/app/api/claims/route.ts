@@ -97,6 +97,6 @@ export async function GET(request: Request) {
     console.error('Claims API GET error:', error);
     const message = error instanceof Error ? error.message : '';
     const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : message === 'Rate limited' ? 429 : 503;
-    return Response.json({ error: message || 'Layanan klaim belum tersedia.', details: error instanceof Error ? error.message : String(error) }, { status: status === 503 ? 500 : status, headers });
+    return Response.json({ error: status === 503 ? 'Layanan klaim belum tersedia. Hubungi admin.' : message }, { status, headers });
   }
 }
