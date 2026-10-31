@@ -1,4 +1,4 @@
-.screen{min-height:100dvh;display:flex;flex-direction:column;background:#080d10;color:#edf3ef;font-family:var(--font-plus-jakarta),sans-serif;overflow-x:hidden}
+.screen{height:100dvh;overflow:hidden;display:flex;flex-direction:column;background:#0b1014;color:#edf3ef;font-family:var(--font-plus-jakarta),sans-serif}
 .header{flex-shrink:0;height:76px;padding:0 max(20px,calc((100vw - 1040px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #24302b}
 .brand{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:700;line-height:1.25;letter-spacing:-.3px}.brandLogo{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid #35483a}.brandSub{display:block;font-size:11px;line-height:1.5;font-weight:500;color:#a6b6ad;letter-spacing:1px;margin-top:2px}
 .terminal{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border:1px solid #35483e;border-radius:8px;font-size:12px;font-weight:600;color:#b4e4c4;white-space:nowrap}.terminal:hover{background:#17271e}
