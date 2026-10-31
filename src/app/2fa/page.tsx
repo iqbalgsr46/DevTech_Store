@@ -825,8 +825,8 @@ function TerminalContent() {
         {isExecuting ? (
           <div className="flex items-center gap-2 text-emerald-400 text-xs py-2 animate-pulse">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="font-mono">Animasi sesi klaim berjalan. Hasil mengikuti respons server.</span>
-            <span className="inline-block animate-ping text-emerald-300">_</span>
+            <span className="font-mono"><span className="text-[#5eafff]">[~]</span> <span className="text-[#56b6c2]">claim:</span> <span className="text-slate-400">waiting</span></span>
+            <span aria-hidden="true" className="inline-block motion-safe:animate-pulse text-emerald-300">▌</span>
           </div>
         ) : (
           <div className="pt-2 border-t border-[#1b2721]">
