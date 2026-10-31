@@ -12,20 +12,21 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL("https://devtechstore.my.id"),
   title: {
-    default: "DevTech AI Store - Langganan Google AI Pro Lebih Murah",
+    default: "DevTech AI Store - Jual Akun ChatGPT Plus Murah & Bergaransi Resmi",
     template: "%s | DevTech AI Store",
   },
   description:
-    "Dapatkan Akses Google AI Pro Premium Resmi & Bergaransi dengan Harga Terbaik di Indonesia. Pembayaran QRIS Cepat & Praktis.",
+    "Beli Akun ChatGPT Plus Murah Resmi & Bergaransi. Akses GPT-4o, OpenAI o1 Reasoning, DALL-E 3, Canvas, Advanced Voice Mode. Pembayaran QRIS Cepat & Praktis.",
   keywords: [
     "DevTech AI Store",
     "devtechstore.my.id",
-    "google ai pro",
-    "langganan google ai pro murah",
-    "gemini advanced indonesia",
-    "beli google ai pro resmi",
-    "upgrade google ai pro bergaransi",
-    "jasa langganan ai indonesia",
+    "chatgpt plus murah",
+    "jual chatgpt plus",
+    "langganan chatgpt plus indonesia",
+    "beli akun chatgpt plus",
+    "chatgpt plus resmi bergaransi",
+    "gpt 4o openai indonesia",
+    "2fa live chatgpt",
   ],
   authors: [{ name: "DevTech AI Store" }],
   creator: "DevTech AI Store",
@@ -42,8 +43,8 @@ export const metadata: Metadata = {
     google: "_2Q1cke-Z0W6oJhYJWeYX9MDqSui1HvRqZ7w5q7qs_U",
   },
   openGraph: {
-    title: "DevTech AI Store - Langganan Google AI Pro Lebih Murah",
-    description: "Akses Penuh Google AI Pro Premium Resmi, Aman & Bergaransi. Bayar via QRIS Cepat.",
+    title: "DevTech AI Store - Jual Akun ChatGPT Plus Murah & Bergaransi",
+    description: "Akses Penuh Akun ChatGPT Plus GPT-4o & o1 Reasoning Resmi, Aman & Bergaransi. Bayar via QRIS Cepat.",
     url: "https://devtechstore.my.id",
     siteName: "DevTech AI Store",
     locale: "id_ID",
@@ -59,8 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "DevTech AI Store - Langganan Google AI Pro",
-    description: "Akses Penuh Google AI Pro Premium Resmi & Bergaransi dengan Penawaran Harga Terbaik.",
+    title: "DevTech AI Store - Jual Akun ChatGPT Plus Murah",
+    description: "Akses Penuh ChatGPT Plus GPT-4o & o1 Reasoning Resmi & Bergaransi dengan Harga Terbaik.",
     images: ["/logo.jpeg"],
   },
   robots: {

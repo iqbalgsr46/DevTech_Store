@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -9,2132 +10,1007 @@ import {
   User,
 } from "firebase/auth";
 import {
-  useSubscribers,
-  useVouchers,
-  addSubscriber,
-  updateSubscriber,
-  deleteSubscriber,
-  addVoucher,
-  updateVoucher,
-  deleteVoucher,
-  checkAndExpireSubscribers,
-  getSubscriberStats,
-  getDaysRemaining,
-  getStatusBadge,
-  Subscriber,
-  Voucher,
-  useSettings,
-  updateSettings,
-  WebsiteSettings,
-  RedeemLink,
-  useRedeemLinks,
-  addRedeemLink,
-  updateRedeemLink,
-  deleteRedeemLink,
-} from "@/lib/database";
-import {
-  Users,
-  Tag,
-  BarChart3,
-  Plus,
-  Pencil,
-  Trash2,
-  LogOut,
-  Search,
-  X,
-  Loader2,
-  RefreshCw,
-  ChevronDown,
   Shield,
-  AlertTriangle,
-  Clock,
-  Home,
-  Settings,
-  Save,
-  CheckCircle2,
-  XCircle,
-  ArrowRight,
-  Link2,
+  Key,
   Copy,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  LogOut,
+  Home,
+  Check,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ExternalLink,
+  RefreshCw,
+  Search,
+  PlusCircle,
+  Database,
+  Edit2,
+  Trash2,
+  X,
+  Clock,
 } from "lucide-react";
 
-// ============================================
-// TOAST NOTIFICATION
-// ============================================
-
-function Toast({
-  message,
-  type,
-  onClose,
-}: {
-  message: string;
-  type: "success" | "error";
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3500);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-      <div
-        className={`pointer-events-auto px-5 py-3.5 rounded-2xl text-sm font-medium shadow-xl shadow-slate-200/50 border animate-slide-down flex items-center gap-3 max-w-[400px] bg-white text-slate-800 ${
-          type === "success"
-            ? "border-emerald-200"
-            : "border-red-200"
-        }`}
-      >
-        <div className={`shrink-0 flex items-center justify-center ${type === "success" ? "text-emerald-500" : "text-red-500"}`}>
-          {type === "success" ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
-        </div>
-        <p className="leading-tight">{message}</p>
-      </div>
-    </div>
-  );
+interface AccountItem {
+  hash: string;
+  code: string;
+  email: string;
+  password: string;
+  secret2fa: string;
+  createdAt: number;
 }
-
-// ============================================
-// LOGIN SCREEN
-// ============================================
-
-function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch {
-      setError("Email atau password salah. Pastikan akun sudah dibuat di Firebase Authentication.");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-[380px]">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Shield size={28} className="text-blue-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Admin Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">DevTech AI Store</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-slate-400"
-              placeholder="admin@email.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-slate-400"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium px-4 py-2.5 rounded-xl flex items-start gap-2">
-              <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : null}
-            Masuk
-          </button>
-        </form>
-
-        <a
-          href="/"
-          className="flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-600 text-xs mt-6 transition-colors"
-        >
-          <Home size={12} /> Kembali ke Halaman Utama
-        </a>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// SUBSCRIBER FORM MODAL
-// ============================================
-
-function SubscriberFormModal({
-  isOpen,
-  onClose,
-  onSave,
-  editData,
-  saving,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: Omit<Subscriber, "id" | "createdAt">) => void;
-  editData: Subscriber | null;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState({
-    nama: "",
-    email: "",
-    whatsapp: "",
-    paket: "super_power" as "super_power" | "invitation",
-    durasi: 18,
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: "",
-    status: "active" as "active" | "expired" | "cancelled",
-    notes: "",
-  });
-
-  useEffect(() => {
-    if (editData) {
-      setForm({
-        nama: editData.nama,
-        email: editData.email,
-        whatsapp: editData.whatsapp,
-        paket: editData.paket,
-        durasi: editData.durasi,
-        startDate: editData.startDate,
-        endDate: editData.endDate,
-        status: editData.status,
-        notes: editData.notes || "",
-      });
-    } else {
-      const today = new Date();
-      const end = new Date(today);
-      end.setMonth(end.getMonth() + 18);
-      setForm({
-        nama: "",
-        email: "",
-        whatsapp: "",
-        paket: "super_power",
-        durasi: 18,
-        startDate: today.toISOString().split("T")[0],
-        endDate: end.toISOString().split("T")[0],
-        status: "active",
-        notes: "",
-      });
-    }
-  }, [editData, isOpen]);
-
-  // Auto-calc endDate when startDate or durasi changes (only for new subscriber)
-  useEffect(() => {
-    if (!editData && form.startDate) {
-      const start = new Date(form.startDate);
-      if (!isNaN(start.getTime())) {
-        start.setMonth(start.getMonth() + form.durasi);
-        setForm((prev) => ({
-          ...prev,
-          endDate: start.toISOString().split("T")[0],
-        }));
-      }
-    }
-  }, [form.startDate, form.durasi, editData]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      <div
-        className="relative bg-white rounded-2xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between z-10">
-          <h3 className="text-lg font-bold">
-            {editData ? "Edit Subscriber" : "Tambah Subscriber"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Nama Lengkap *
-              </label>
-              <input
-                type="text"
-                value={form.nama}
-                onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                placeholder="Nama subscriber"
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Email Google *
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="email@gmail.com"
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                WhatsApp
-              </label>
-              <input
-                type="tel"
-                value={form.whatsapp}
-                onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                placeholder="08xxxxxxxxxx"
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Paket
-              </label>
-              <div className="relative">
-                <select
-                  value={form.paket}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      paket: e.target.value as "super_power" | "invitation",
-                      durasi:
-                        e.target.value === "super_power" ? 18 : form.durasi,
-                    })
-                  }
-                  className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                >
-                  <option value="super_power" className="bg-white">
-                    Super Power
-                  </option>
-                  <option value="invitation" className="bg-white">
-                    Invitation
-                  </option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Durasi (Bulan)
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={18}
-                value={form.durasi}
-                onChange={(e) =>
-                  setForm({ ...form, durasi: parseInt(e.target.value) || 1 })
-                }
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Tanggal Mulai
-              </label>
-              <input
-                type="date"
-                value={form.startDate}
-                onChange={(e) =>
-                  setForm({ ...form, startDate: e.target.value })
-                }
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Tanggal Berakhir
-              </label>
-              <input
-                type="date"
-                value={form.endDate}
-                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-            {editData && (
-              <div className="col-span-2">
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        status: e.target.value as
-                          | "active"
-                          | "expired"
-                          | "cancelled",
-                      })
-                    }
-                    className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                  >
-                    <option value="active" className="bg-white">
-                      Active
-                    </option>
-                    <option value="expired" className="bg-white">
-                      Expired
-                    </option>
-                    <option value="cancelled" className="bg-white">
-                      Cancelled
-                    </option>
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                  />
-                </div>
-              </div>
-            )}
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Catatan (opsional)
-              </label>
-              <textarea
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                rows={2}
-                placeholder="Tambahkan catatan..."
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none placeholder:text-slate-400"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={() => onSave(form)}
-            disabled={!form.nama || !form.email || saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-          >
-            {saving && <Loader2 size={16} className="animate-spin" />}
-            {editData ? "Simpan Perubahan" : "Tambah Subscriber"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// VOUCHER FORM MODAL
-// ============================================
-
-function VoucherFormModal({
-  isOpen,
-  onClose,
-  onSave,
-  editData,
-  saving,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: Voucher) => void;
-  editData: Voucher | null;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState({
-    code: "",
-    type: "percentage" as "percentage" | "fixed",
-    value: 10,
-    maxUses: 50,
-    currentUses: 0,
-    isActive: true,
-    expiredAt: "" as string,
-    applicablePackage: "all" as "all" | "super_power" | "invitation",
-  });
-
-  useEffect(() => {
-    if (editData) {
-      setForm({
-        code: editData.code,
-        type: editData.type,
-        value: editData.value,
-        maxUses: editData.maxUses,
-        currentUses: editData.currentUses,
-        isActive: editData.isActive,
-        expiredAt: editData.expiredAt || "",
-        applicablePackage: editData.applicablePackage || "all",
-      });
-    } else {
-      setForm({
-        code: "",
-        type: "percentage",
-        value: 10,
-        maxUses: 50,
-        currentUses: 0,
-        isActive: true,
-        expiredAt: "",
-        applicablePackage: "all",
-      });
-    }
-  }, [editData, isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      <div
-        className="relative bg-white rounded-2xl w-full max-w-[420px] border border-slate-200 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="text-lg font-bold">
-            {editData ? "Edit Voucher" : "Buat Voucher Baru"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Kode Voucher *
-            </label>
-            <input
-              type="text"
-              value={form.code}
-              onChange={(e) =>
-                setForm({ ...form, code: e.target.value.toUpperCase() })
-              }
-              disabled={!!editData}
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase disabled:opacity-50 placeholder:text-slate-400"
-              placeholder="Contoh: DISKON10"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Tipe Diskon
-              </label>
-              <div className="relative">
-                <select
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      type: e.target.value as "percentage" | "fixed",
-                    })
-                  }
-                  className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                >
-                  <option value="percentage" className="bg-white">
-                    Persen (%)
-                  </option>
-                  <option value="fixed" className="bg-white">
-                    Nominal (Rp)
-                  </option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Nilai {form.type === "percentage" ? "(%)" : "(Rp)"}
-              </label>
-              <input
-                type="number"
-                value={form.value}
-                onChange={(e) =>
-                  setForm({ ...form, value: parseInt(e.target.value) || 0 })
-                }
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Max Penggunaan
-              </label>
-              <input
-                type="number"
-                value={form.maxUses}
-                onChange={(e) =>
-                  setForm({ ...form, maxUses: parseInt(e.target.value) || 1 })
-                }
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Expired (opsional)
-              </label>
-              <input
-                type="date"
-                value={form.expiredAt}
-                onChange={(e) =>
-                  setForm({ ...form, expiredAt: e.target.value })
-                }
-                className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Berlaku Untuk
-            </label>
-            <select
-              value={form.applicablePackage}
-              onChange={(e) => setForm({ ...form, applicablePackage: e.target.value as "all" | "super_power" | "invitation" })}
-              className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
-            >
-              <option value="all">Semua Paket</option>
-              <option value="super_power">Hanya Paket 1 (Super Power)</option>
-              <option value="invitation">Hanya Paket 2 (Family Sharing)</option>
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, isActive: !form.isActive })}
-              className={`w-10 h-5 rounded-full transition-colors relative ${form.isActive ? "bg-emerald-500" : "bg-gray-600"}`}
-            >
-              <div
-                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow ${form.isActive ? "left-5" : "left-0.5"}`}
-              />
-            </button>
-            <span className="text-sm text-slate-600">
-              {form.isActive ? "Aktif" : "Nonaktif"}
-            </span>
-          </div>
-
-          <button
-            onClick={() =>
-              onSave({
-                ...form,
-                expiredAt: form.expiredAt || null,
-                createdAt: editData?.createdAt || Date.now(),
-              })
-            }
-            disabled={!form.code || saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-          >
-            {saving && <Loader2 size={16} className="animate-spin" />}
-            {editData ? "Simpan Perubahan" : "Buat Voucher"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// REALTIME COUNTDOWN
-// ============================================
-
-function RealtimeCountdown({ endDate, daysLeft }: { endDate: string, daysLeft: number }) {
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    // Set expiration to 23:59:59 of the endDate
-    const target = new Date(`${endDate}T23:59:59`).getTime();
-
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const diff = target - now;
-
-      if (diff <= 0) {
-        setTimeLeft("Expired");
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      setTimeLeft(`${days} Hari ${hours} Jam ${minutes} Menit ${seconds} Detik`);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [endDate]);
-
-  return (
-    <div className={`text-[11px] font-mono mt-1 ${daysLeft <= 7 ? "text-amber-400" : "text-slate-500"}`}>
-      {timeLeft}
-    </div>
-  );
-}
-
-// ============================================
-// REDEEM LINK MODAL
-// ============================================
-
-function RedeemLinkFormModal({
-  isOpen,
-  onClose,
-  onSubmit,
-  editData,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
-  editData: RedeemLink | null;
-}) {
-  const [passcode, setPasscode] = useState("");
-  const [url, setUrl] = useState("");
-  const [guideText, setGuideText] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (editData) {
-        setPasscode(editData.passcode);
-        setUrl(editData.url);
-        setGuideText(editData.guideText);
-      } else {
-        // default template
-        setPasscode(Math.random().toString(36).substring(2, 8).toUpperCase());
-        setUrl("https://");
-        setGuideText("Note: \n- jangan klik aktivasi sebelum cek akun email yg dituju\n- jangan aktivasi di akun email yg aktif langganan google plus/pro/ultra\n- pastikan berada di akun email yg ingin berlangganan saat melakukan aktivasi, dapat dilihat di pojok atas sebelah kanan untuk akunnya");
-      }
-    }
-  }, [isOpen, editData]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await onSubmit({ passcode, url, guideText });
-    setLoading(false);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-bold text-slate-800">
-            {editData ? "Edit Link Redeem" : "Tambah Link Redeem"}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-6 overflow-y-auto">
-          <form id="redeemForm" onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Passcode (Kunci Akses)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-slate-800 font-mono font-bold tracking-widest"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setPasscode(Math.random().toString(36).substring(2, 8).toUpperCase())}
-                  className="px-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200"
-                  title="Generate Random"
-                >
-                  <RefreshCw size={16} />
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                URL Tujuan
-              </label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-slate-800 text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Panduan Aktivasi
-              </label>
-              <textarea
-                value={guideText}
-                onChange={(e) => setGuideText(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-slate-800 text-sm min-h-[160px]"
-                required
-              />
-            </div>
-          </form>
-        </div>
-        <div className="p-4 border-t border-slate-100 bg-slate-50 sticky bottom-0 z-10 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-xl transition-colors text-sm"
-          >
-            Batal
-          </button>
-          <button
-            type="submit"
-            form="redeemForm"
-            disabled={loading}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors flex items-center gap-2 text-sm disabled:opacity-50"
-          >
-            {loading && <Loader2 size={16} className="animate-spin" />}
-            Simpan
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// REDEEM TAB COMPONENT
-// ============================================
-
-function RedeemTabContent({
-  links,
-  onAdd,
-  onEdit,
-  onDelete,
-}: {
-  links: RedeemLink[];
-  onAdd: () => void;
-  onEdit: (l: RedeemLink) => void;
-  onDelete: (l: RedeemLink) => void;
-}) {
-  const handleCopyLink = (passcode: string) => {
-    const text = `Pesanan Anda sudah siap!\n\nSilakan kunjungi website kami dan klik tombol Redeem/Klaim Pesanan, atau gunakan link berikut:\n\nhttps://devtech-aistore.com/?redeem=${passcode}\n\nMasukkan KODE AKSES: *${passcode}*`;
-    navigator.clipboard.writeText(text);
-    alert("Teks panduan untuk pelanggan telah disalin ke clipboard!");
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Manajemen Link Redeem</h2>
-          <p className="text-slate-500 text-sm mt-1">Buat kunci akses untuk pelanggan mengambil pesanannya.</p>
-        </div>
-        <button
-          onClick={onAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
-        >
-          <Plus size={18} />
-          Tambah Link Baru
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap">Passcode</th>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap">URL Tujuan</th>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap">Tanggal Dibuat</th>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap">Status</th>
-                <th className="px-6 py-4 font-semibold text-right whitespace-nowrap">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {links.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    Belum ada link redeem yang dibuat.
-                  </td>
-                </tr>
-              ) : (
-                links.map((link) => (
-                  <tr key={link.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-mono font-bold">
-                        {link.passcode}
-                        <button onClick={() => navigator.clipboard.writeText(link.passcode)} className="hover:text-blue-900" title="Salin Passcode">
-                          <Copy size={14} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 max-w-[200px] truncate text-slate-500" title={link.url}>
-                      {link.url}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {new Date(link.createdAt).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {link.isOpened ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                          <CheckCircle2 size={14} />
-                          Sudah Dibuka
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 text-slate-500 text-xs font-bold border border-slate-200">
-                          <Clock size={14} />
-                          Belum Dibuka
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleCopyLink(link.passcode)}
-                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                          title="Salin Pesan WA"
-                        >
-                          <Link2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => onEdit(link)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(link)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// SETTINGS TAB COMPONENT
-// ============================================
-
-function SettingsTabContent({
-  initialSettings,
-  onSave,
-  saving,
-}: {
-  initialSettings: WebsiteSettings | null;
-  onSave: (data: WebsiteSettings) => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<WebsiteSettings>({
-    pricing: {
-      paket1: { hargaNormal: "75000", hargaPromo: "55000" },
-      paket2: {
-        bulan1: "15000",
-        bulan2: "20000",
-        bulan3: "25000",
-        bulan4: "30000",
-        bulan5: "35000",
-        bulan6: "35000",
-        bulan7: "40000",
-        bulan8: "40000",
-        bulan9: "45000",
-        bulan10: "45000",
-        bulan11: "50000",
-        bulan12: "50000",
-      },
-    },
-    giveaway: {
-      isActive: false,
-      tiktokUrl: "",
-      googleFormUrl: "",
-      announcementDate: "",
-    },
-    tutorials: {
-      paket1: { videoUrl: "", passcode: "" },
-      family: { videoUrl: "", passcode: "" },
-    },
-  });
-
-  useEffect(() => {
-    if (initialSettings) {
-      setForm({
-        ...initialSettings,
-        giveaway: initialSettings.giveaway || {
-          isActive: false,
-          tiktokUrl: "",
-          googleFormUrl: "",
-          announcementDate: "",
-        },
-        tutorials: initialSettings.tutorials || {
-          paket1: { videoUrl: "", passcode: "" },
-          family: { videoUrl: "", passcode: "" },
-        }
-      });
-    }
-  }, [initialSettings]);
-
-  const handlePaket1Change = (field: "hargaNormal" | "hargaPromo", value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      pricing: {
-        ...prev.pricing,
-        paket1: { ...prev.pricing.paket1, [field]: value },
-      },
-    }));
-  };
-
-  const handlePaket2Change = (key: keyof WebsiteSettings["pricing"]["paket2"], value: string | boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      pricing: {
-        ...prev.pricing,
-        paket2: { ...prev.pricing.paket2, [key]: value },
-      },
-    }));
-  };
-
-  const handleGiveawayChange = (field: keyof NonNullable<WebsiteSettings["giveaway"]>, value: string | boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      giveaway: {
-        ...prev.giveaway!,
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleTutorialsChange = (category: "paket1" | "family", field: "videoUrl" | "passcode", value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      tutorials: {
-        ...prev.tutorials!,
-        [category]: {
-          ...prev.tutorials![category],
-          [field]: value,
-        }
-      },
-    }));
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-        <h4 className="text-slate-800 font-semibold mb-4">Paket 1 (Super Power)</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Harga Normal (Dicoret)</label>
-            <input
-              type="text"
-              value={form.pricing.paket1.hargaNormal}
-              onChange={(e) => handlePaket1Change("hargaNormal", e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="Contoh: 75000"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Harga Promo (Aktif)</label>
-            <input
-              type="text"
-              value={form.pricing.paket1.hargaPromo}
-              onChange={(e) => handlePaket1Change("hargaPromo", e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="Contoh: 55000"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-slate-800 font-semibold">Paket 2 (Invitation / Family)</h4>
-          <div className="flex items-center gap-2">
-            <label htmlFor="toggle-paket2" className="text-sm font-medium text-slate-600 cursor-pointer">Status Paket Habis (Tutup)</label>
-            <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-              <input
-                id="toggle-paket2"
-                type="checkbox"
-                checked={form.pricing.paket2.isClosed || false}
-                onChange={(e) => handlePaket2Change("isClosed", e.target.checked)}
-                className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10"
-                style={{
-                  transform: form.pricing.paket2.isClosed ? "translateX(100%)" : "translateX(0)",
-                  borderColor: form.pricing.paket2.isClosed ? "#EF4444" : "#CBD5E1",
-                }}
-              />
-              <label
-                htmlFor="toggle-paket2"
-                className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
-                  form.pricing.paket2.isClosed ? "bg-red-500" : "bg-slate-300"
-                }`}
-              ></label>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
-            const key = `bulan${m}` as keyof WebsiteSettings["pricing"]["paket2"];
-            return (
-              <div key={key}>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">{m} Bulan</label>
-                <input
-                  type="text"
-                  value={(form.pricing.paket2[key] as string) || ""}
-                  onChange={(e) => handlePaket2Change(key, e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                  placeholder={`Harga ${m} bulan`}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-slate-800 font-semibold">Pengaturan Event Giveaway</h4>
-          <div className="flex items-center gap-2">
-            <label htmlFor="toggle-giveaway" className="text-sm font-medium text-slate-600 cursor-pointer">Status Giveaway</label>
-            <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-              <input
-                id="toggle-giveaway"
-                type="checkbox"
-                checked={form.giveaway?.isActive || false}
-                onChange={(e) => handleGiveawayChange("isActive", e.target.checked)}
-                className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10"
-                style={{
-                  transform: form.giveaway?.isActive ? "translateX(100%)" : "translateX(0)",
-                  borderColor: form.giveaway?.isActive ? "#10B981" : "#CBD5E1",
-                }}
-              />
-              <label
-                htmlFor="toggle-giveaway"
-                className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
-                  form.giveaway?.isActive ? "bg-emerald-500" : "bg-slate-300"
-                }`}
-              ></label>
-            </div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Link Video TikTok</label>
-            <input
-              type="text"
-              value={form.giveaway?.tiktokUrl}
-              onChange={(e) => handleGiveawayChange("tiktokUrl", e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="https://tiktok.com/..."
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Link Pendaftaran (Google Form)</label>
-            <input
-              type="text"
-              value={form.giveaway?.googleFormUrl}
-              onChange={(e) => handleGiveawayChange("googleFormUrl", e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="https://forms.gle/..."
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Tanggal Pengumuman (Opsional)</label>
-            <input
-              type="text"
-              value={form.giveaway?.announcementDate || ""}
-              onChange={(e) => handleGiveawayChange("announcementDate", e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="Contoh: 15 Agustus 2026 (kosongkan jika belum ada)"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-        <h4 className="text-slate-800 font-semibold mb-4">Pengaturan Video Tutorial</h4>
-        
-        <div className="mb-6">
-          <h5 className="text-sm font-medium text-slate-700 mb-3 border-b pb-2">Panduan Aktivasi Paket 1 (Super Power)</h5>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">Link Video (MP4)</label>
-              <input
-                type="text"
-                value={form.tutorials?.paket1.videoUrl || ""}
-                onChange={(e) => handleTutorialsChange("paket1", "videoUrl", e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                placeholder="https://example.com/video1.mp4"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">Kunci Rahasia (Passcode)</label>
-              <input
-                type="text"
-                value={form.tutorials?.paket1.passcode || ""}
-                onChange={(e) => handleTutorialsChange("paket1", "passcode", e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                placeholder="Contoh: DEVTECH2026"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h5 className="text-sm font-medium text-slate-700 mb-3 border-b pb-2">Cara Invite Keluarga (Family Sharing)</h5>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">Link Video (MP4)</label>
-              <input
-                type="text"
-                value={form.tutorials?.family.videoUrl || ""}
-                onChange={(e) => handleTutorialsChange("family", "videoUrl", e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                placeholder="https://example.com/video2.mp4"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">Kunci Rahasia (Passcode)</label>
-              <input
-                type="text"
-                value={form.tutorials?.family.passcode || ""}
-                onChange={(e) => handleTutorialsChange("family", "passcode", e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm focus:outline-none focus:border-blue-500"
-                placeholder="Contoh: FAMILY2026"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={() => onSave(form)}
-        disabled={saving}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-      >
-        {saving && <Loader2 size={16} className="animate-spin" />}
-        <Save size={16} /> Simpan Pengaturan
-      </button>
-    </div>
-  );
-}
-
-// ============================================
-// MAIN DASHBOARD (hanya render setelah login)
-// ============================================
-
-const TABS = [
-  { id: "overview", label: "Overview", icon: BarChart3 },
-  { id: "subscribers", label: "Subscribers", icon: Users },
-  { id: "vouchers", label: "Vouchers", icon: Tag },
-  { id: "redeem", label: "Redeem Links", icon: Link2 },
-  { id: "settings", label: "Pengaturan", icon: Settings },
-] as const;
-
-type TabId = (typeof TABS)[number]["id"];
-
-function DashboardContent({ user }: { user: User }) {
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
-
-  // Data: real-time listeners (hanya aktif setelah login)
-  const { subscribers, loading: subsLoading } = useSubscribers();
-  const { vouchers, loading: vouchLoading } = useVouchers();
-  const { settings, loading: settingsLoading } = useSettings();
-  const { links: redeemLinks, loading: redeemLoading } = useRedeemLinks();
-
-  // Modals
-  const [subModalOpen, setSubModalOpen] = useState(false);
-  const [subEditData, setSubEditData] = useState<Subscriber | null>(null);
-  const [vouchModalOpen, setVouchModalOpen] = useState(false);
-  const [vouchEditData, setVouchEditData] = useState<Voucher | null>(null);
-  const [redeemModalOpen, setRedeemModalOpen] = useState(false);
-  const [redeemEditData, setRedeemEditData] = useState<RedeemLink | null>(null);
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  // Toast
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
-
-  // Saving state
-  const [saving, setSaving] = useState(false);
-
-  const showToast = useCallback(
-    (message: string, type: "success" | "error") => {
-      setToast({ message, type });
-    },
-    []
-  );
-
-  // Auto-expire check on mount
-  useEffect(() => {
-    checkAndExpireSubscribers().catch(() => {
-      // silently ignore: rules may block if no data yet
-    });
-  }, []);
-
-  // Stats
-  const stats = useMemo(
-    () => getSubscriberStats(subscribers),
-    [subscribers]
-  );
-
-  // Filtered subscribers
-  const filteredSubs = useMemo(() => {
-    return subscribers.filter((s) => {
-      const matchSearch =
-        !searchQuery ||
-        s.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.whatsapp.includes(searchQuery);
-      const matchStatus =
-        statusFilter === "all" || s.status === statusFilter;
-      return matchSearch && matchStatus;
-    });
-  }, [subscribers, searchQuery, statusFilter]);
-
-  // Recent subscribers for overview
-  const recentSubs = useMemo(() => subscribers.slice(0, 5), [subscribers]);
-
-  // Handlers with error handling
-  const handleSaveSubscriber = async (
-    data: Omit<Subscriber, "id" | "createdAt">
-  ) => {
-    setSaving(true);
-    try {
-      if (subEditData) {
-        await updateSubscriber(subEditData.id, data);
-        showToast("Subscriber berhasil diperbarui", "success");
-      } else {
-        await addSubscriber(data);
-        showToast("Subscriber berhasil ditambahkan", "success");
-      }
-      setSubModalOpen(false);
-      setSubEditData(null);
-    } catch {
-      showToast("Gagal menyimpan subscriber. Cek koneksi internet.", "error");
-    }
-    setSaving(false);
-  };
-
-  const handleDeleteSubscriber = async (id: string) => {
-    if (confirm("Yakin ingin menghapus subscriber ini?")) {
-      try {
-        await deleteSubscriber(id);
-        showToast("Subscriber berhasil dihapus", "success");
-      } catch {
-        showToast("Gagal menghapus subscriber", "error");
-      }
-    }
-  };
-
-  const handleSaveVoucher = async (data: Voucher) => {
-    setSaving(true);
-    try {
-      if (vouchEditData) {
-        await updateVoucher(data.code, data);
-        showToast("Voucher berhasil diperbarui", "success");
-      } else {
-        await addVoucher(data);
-        showToast("Voucher berhasil dibuat", "success");
-      }
-      setVouchModalOpen(false);
-      setVouchEditData(null);
-    } catch {
-      showToast("Gagal menyimpan voucher. Cek koneksi internet.", "error");
-    }
-    setSaving(false);
-  };
-
-  const handleDeleteVoucher = async (code: string) => {
-    if (confirm("Yakin ingin menghapus voucher ini?")) {
-      try {
-        await deleteVoucher(code);
-        showToast("Voucher berhasil dihapus", "success");
-      } catch {
-        showToast("Gagal menghapus voucher", "error");
-      }
-    }
-  };
-
-  const handleRefreshExpiry = async () => {
-    try {
-      await checkAndExpireSubscribers();
-      showToast("Status subscriber berhasil diperbarui", "success");
-    } catch {
-      showToast("Gagal memperbarui status", "error");
-    }
-  };
-
-  const handleSaveSettings = async (data: WebsiteSettings) => {
-    setSaving(true);
-    try {
-      await updateSettings(data);
-      showToast("Pengaturan website berhasil disimpan!", "success");
-    } catch (err: any) {
-      showToast(err.message || "Gagal menyimpan pengaturan.", "error");
-    }
-    setSaving(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col md:flex-row">
-      {/* Toast */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
-      {/* Mobile Header & Tabs */}
-      <header className="md:hidden sticky top-0 z-40 bg-white border-b border-slate-200">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo.jpeg" alt="Logo" className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-200" />
-            <h1 className="text-sm font-bold">Admin Panel</h1>
-          </div>
-          <button
-            onClick={() => signOut(auth)}
-            className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            Keluar
-          </button>
-        </div>
-        <div className="flex overflow-x-auto px-2 pb-2 scrollbar-hide gap-1">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                <Icon size={14} /> {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </header>
-
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 sticky top-0 h-screen shrink-0">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-3 mb-1">
-            <img src="/logo.jpeg" alt="Logo" className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-200" />
-            <h1 className="text-lg font-bold tracking-tight">Admin Panel</h1>
-          </div>
-          <p className="text-slate-400 text-xs truncate pl-11">{user.email}</p>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-blue-50 text-blue-600 shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                }`}
-              >
-                <Icon size={18} className={activeTab === tab.id ? "text-blue-600" : "text-slate-400"} /> 
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-slate-100">
-          <a
-            href="/"
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors mb-1"
-          >
-            <Home size={18} className="text-slate-400" /> Kunjungi Website
-          </a>
-          <button
-            onClick={() => signOut(auth)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-          >
-            <LogOut size={18} className="text-red-500" /> Keluar
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1200px] mx-auto">
-        {/* ====================== OVERVIEW TAB ====================== */}
-        {activeTab === "overview" && (
-          <div>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-slate-500 text-sm font-medium">Total Subscribers</p>
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Users size={16} className="text-slate-600" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
-              </div>
-
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-slate-500 text-sm font-medium">Active</p>
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
-                    <div className="relative flex items-center justify-center">
-                       <div className="absolute w-2 h-2 bg-emerald-400 rounded-full animate-ping opacity-75" />
-                       <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.active}</p>
-              </div>
-
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-slate-500 text-sm font-medium">Hampir Habis</p>
-                  <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-                    <Clock size={16} className="text-amber-500" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.expiringSoon}</p>
-              </div>
-
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-slate-500 text-sm font-medium">Expired</p>
-                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
-                    <AlertTriangle size={16} className="text-red-500" />
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.expired}</p>
-              </div>
-            </div>
-
-            {/* Quick Info Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mt-5">
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold text-slate-800">Voucher Aktif</h3>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                      <Tag size={16} className="text-blue-600" />
-                    </div>
-                  </div>
-                  <p className="text-4xl font-bold text-slate-900">{vouchers.filter((v) => v.isActive).length}</p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 text-sm text-slate-500">
-                  <span className="font-medium text-slate-700">{vouchers.reduce((acc, v) => acc + (v.currentUses || 0), 0)}</span> total penggunaan voucher
-                </div>
-              </div>
-
-              <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6 flex flex-col hover:shadow-md transition-shadow">
-                <h3 className="text-base font-semibold text-slate-800 mb-6">Quick Actions</h3>
-                <div className="flex flex-col gap-3 mt-auto">
-                  <button
-                    onClick={() => {
-                      setSubEditData(null);
-                      setSubModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm"
-                  >
-                    <Plus size={16} /> Tambah Subscriber Baru
-                  </button>
-                  <button
-                    onClick={() => {
-                      setVouchEditData(null);
-                      setVouchModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
-                  >
-                    <Tag size={16} className="text-slate-400" /> Buat Voucher Baru
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Subscribers */}
-            {recentSubs.length > 0 && (
-              <div className="mt-5 bg-white shadow-sm border border-slate-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-base font-semibold text-slate-800">
-                    Subscriber Terbaru
-                  </h3>
-                  <button
-                    onClick={() => setActiveTab("subscribers")}
-                    className="flex items-center gap-1.5 text-blue-600 text-sm font-medium hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    Lihat Semua <ArrowRight size={14} />
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {recentSubs.map((sub) => {
-                    const badge = getStatusBadge(sub.status, sub.endDate);
-                    return (
-                      <div
-                        key={sub.id}
-                        className="flex items-center justify-between py-3 px-4 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50 hover:bg-white transition-colors"
-                      >
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 mb-0.5">
-                            {sub.nama}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {sub.email} •{" "}
-                            {sub.paket === "super_power"
-                              ? "Super Power"
-                              : "Invitation"}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${badge.bgColor} ${badge.color}`}
-                        >
-                          {badge.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ====================== SUBSCRIBERS TAB ====================== */}
-        {activeTab === "subscribers" && (
-          <div>
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-grow">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari nama, email, atau WA..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-800 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none pr-8"
-                  >
-                    <option value="all" className="bg-white">
-                      Semua Status
-                    </option>
-                    <option value="active" className="bg-white">
-                      Active
-                    </option>
-                    <option value="expired" className="bg-white">
-                      Expired
-                    </option>
-                    <option value="cancelled" className="bg-white">
-                      Cancelled
-                    </option>
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                  />
-                </div>
-                <button
-                  onClick={handleRefreshExpiry}
-                  className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 hover:text-slate-800 transition-colors"
-                  title="Refresh expired status"
-                >
-                  <RefreshCw size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    setSubEditData(null);
-                    setSubModalOpen(true);
-                  }}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white text-sm font-semibold flex items-center gap-1.5 transition-colors shrink-0"
-                >
-                  <Plus size={16} /> Tambah
-                </button>
-              </div>
-            </div>
-
-            {/* Result Count */}
-            {(searchQuery || statusFilter !== "all") && (
-              <p className="text-slate-500 text-xs mb-3">
-                {filteredSubs.length} hasil ditemukan
-                {searchQuery && ` untuk "${searchQuery}"`}
-              </p>
-            )}
-
-            {/* Table */}
-            {subsLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Loader2 size={28} className="animate-spin text-blue-400" />
-                <p className="text-slate-500 text-sm">Memuat data...</p>
-              </div>
-            ) : filteredSubs.length === 0 ? (
-              <div className="text-center py-16">
-                <Users size={40} className="text-gray-700 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm font-medium">
-                  {searchQuery || statusFilter !== "all"
-                    ? "Tidak ada subscriber yang cocok dengan filter"
-                    : "Belum ada subscriber"}
-                </p>
-                {!searchQuery && statusFilter === "all" && (
-                  <button
-                    onClick={() => {
-                      setSubEditData(null);
-                      setSubModalOpen(true);
-                    }}
-                    className="mt-3 text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors bg-blue-50 px-4 py-2 rounded-xl"
-                  >
-                    Tambah subscriber pertama
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm pb-1 scrollbar-thin">
-                <table className="w-full min-w-[800px] text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider font-medium border-b border-slate-200">
-                      <th className="text-left px-5 py-4">
-                        Subscriber
-                      </th>
-                      <th className="text-left px-5 py-4 hidden sm:table-cell">
-                        Paket
-                      </th>
-                      <th className="text-left px-5 py-4 hidden md:table-cell">
-                        Mulai
-                      </th>
-                      <th className="text-left px-5 py-4">
-                        Berakhir
-                      </th>
-                      <th className="text-left px-5 py-4">
-                        Status
-                      </th>
-                      <th className="text-right px-5 py-4">
-                        Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredSubs.map((sub) => {
-                      const badge = getStatusBadge(sub.status, sub.endDate);
-                      const daysLeft = getDaysRemaining(sub.endDate);
-                      return (
-                        <tr
-                          key={sub.id}
-                          className="hover:bg-slate-50 transition-colors group"
-                        >
-                          <td className="px-5 py-4">
-                            <div className="font-semibold text-slate-800">
-                              {sub.nama}
-                            </div>
-                            <div className="text-slate-500 text-xs mt-0.5">
-                              {sub.email}
-                            </div>
-                            <div className="text-slate-400 text-xs sm:hidden mt-1">
-                              {sub.paket === "super_power"
-                                ? "Super Power"
-                                : "Invitation"}{" "}
-                              <span className="mx-1 text-slate-300">|</span> {sub.durasi} bln
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 hidden sm:table-cell">
-                            <span
-                              className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${sub.paket === "super_power" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
-                            >
-                              {sub.paket === "super_power"
-                                ? "Super Power"
-                                : "Invitation"}
-                            </span>
-                            <span className="text-slate-500 text-xs block mt-2 font-medium">
-                              {sub.durasi} bulan
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-slate-500 text-xs hidden md:table-cell font-mono">
-                            {sub.startDate}
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="text-slate-600 text-xs font-mono">
-                              {sub.endDate}
-                            </div>
-                            {sub.status === "active" && (
-                              <RealtimeCountdown endDate={sub.endDate} daysLeft={daysLeft} />
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span
-                              className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${badge.bgColor} ${badge.color} ${
-                                badge.label === "Active" ? "border-emerald-200" : 
-                                badge.label === "Expiring" ? "border-amber-200" : 
-                                badge.label === "Dibatalkan" || badge.label === "Cancelled" ? "border-slate-200" : "border-red-200"
-                              }`}
-                            >
-                              {badge.label}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => {
-                                  setSubEditData(sub);
-                                  setSubModalOpen(true);
-                                }}
-                                className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-500 hover:text-blue-400"
-                                title="Edit"
-                              >
-                                <Pencil size={13} />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleDeleteSubscriber(sub.id)
-                                }
-                                className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-red-500/10 transition-colors text-slate-500 hover:text-red-400"
-                                title="Hapus"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ====================== VOUCHERS TAB ====================== */}
-        {activeTab === "vouchers" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-semibold text-slate-600">
-                {vouchers.length} voucher
-              </h3>
-              <button
-                onClick={() => {
-                  setVouchEditData(null);
-                  setVouchModalOpen(true);
-                }}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white text-sm font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Plus size={16} /> Buat Voucher
-              </button>
-            </div>
-
-            {vouchLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Loader2 size={28} className="animate-spin text-blue-400" />
-                <p className="text-slate-500 text-sm">Memuat voucher...</p>
-              </div>
-            ) : vouchers.length === 0 ? (
-              <div className="text-center py-16">
-                <Tag size={40} className="text-gray-700 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm font-medium">
-                  Belum ada voucher
-                </p>
-                <button
-                  onClick={() => {
-                    setVouchEditData(null);
-                    setVouchModalOpen(true);
-                  }}
-                  className="mt-4 text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors bg-blue-50 px-4 py-2 rounded-xl"
-                >
-                  Buat voucher pertama
-                </button>
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {vouchers.map((v) => {
-                  const today = new Date().toISOString().split("T")[0];
-                  const isExpired = v.expiredAt && v.expiredAt < today;
-                  const isHabis = (v.currentUses || 0) >= v.maxUses;
-                  
-                  let statusText = "Nonaktif";
-                  let statusColor = "bg-slate-50 text-slate-500 border-slate-200";
-                  let borderClass = "border-slate-100 opacity-50";
-
-                  if (!v.isActive) {
-                    statusText = "Nonaktif";
-                  } else if (isExpired) {
-                    statusText = "Kedaluwarsa";
-                    statusColor = "bg-red-50 text-red-700 border-red-200";
-                    borderClass = "border-red-200";
-                  } else if (isHabis) {
-                    statusText = "Habis";
-                    statusColor = "bg-orange-50 text-orange-700 border-orange-200";
-                    borderClass = "border-orange-200";
-                  } else {
-                    statusText = "Aktif";
-                    statusColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
-                    borderClass = "border-slate-200";
-                  }
-
-                  return (
-                  <div
-                    key={v.code}
-                    className={`bg-slate-50 border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 ${borderClass}`}
-                  >
-                    <div className="flex-grow">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <code className="text-slate-800 font-bold text-sm bg-slate-50 px-2 py-0.5 rounded-md">
-                          {v.code}
-                        </code>
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${statusColor}`}
-                        >
-                          {statusText}
-                        </span>
-                        {v.applicablePackage && v.applicablePackage !== "all" && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-600">
-                            Khusus {v.applicablePackage === "super_power" ? "Paket 1" : "Paket 2"}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-slate-500 text-xs">
-                        {v.type === "percentage"
-                          ? `Diskon ${v.value}%`
-                          : `Potongan Rp${v.value.toLocaleString("id-ID")}`}
-                        <span className="mx-1.5 text-slate-300">|</span>
-                        Dipakai {v.currentUses || 0} dari {v.maxUses}
-                        {v.expiredAt && (
-                           <>
-                             <span className="mx-1.5 text-slate-300">|</span>
-                             Expired: {v.expiredAt}
-                           </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => {
-                          setVouchEditData(v);
-                          setVouchModalOpen(true);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-500 hover:text-blue-400"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteVoucher(v.code)}
-                        className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-red-500/10 transition-colors text-slate-500 hover:text-red-400"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                )})}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ====================== REDEEM LINKS TAB ====================== */}
-        {activeTab === "redeem" && (
-          <RedeemTabContent
-            links={redeemLinks}
-            onAdd={() => {
-              setRedeemEditData(null);
-              setRedeemModalOpen(true);
-            }}
-            onEdit={(l) => {
-              setRedeemEditData(l);
-              setRedeemModalOpen(true);
-            }}
-            onDelete={async (l) => {
-              if (confirm(`Yakin ingin menghapus link redeem dengan passcode ${l.passcode}?`)) {
-                try {
-                  await deleteRedeemLink(l.id);
-                  showToast("Link redeem berhasil dihapus", "success");
-                } catch (err: any) {
-                  showToast(err.message, "error");
-                }
-              }
-            }}
-          />
-        )}
-
-        {/* ====================== SETTINGS TAB ====================== */}
-        {activeTab === "settings" && (
-          <div>
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-slate-600">
-                Pengaturan Website
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">Ubah konten dinamis pada halaman utama (landing page).</p>
-            </div>
-            
-            {settingsLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Loader2 size={28} className="animate-spin text-blue-400" />
-                <p className="text-slate-500 text-sm">Memuat pengaturan...</p>
-              </div>
-            ) : (
-              <SettingsTabContent
-                initialSettings={settings}
-                onSave={handleSaveSettings}
-                saving={saving}
-              />
-            )}
-          </div>
-        )}
-        </div>
-      </main>
-
-      {/* Modals */}
-      <SubscriberFormModal
-        isOpen={subModalOpen}
-        onClose={() => {
-          setSubModalOpen(false);
-          setSubEditData(null);
-        }}
-        onSave={handleSaveSubscriber}
-        editData={subEditData}
-        saving={saving}
-      />
-      <VoucherFormModal
-        isOpen={vouchModalOpen}
-        onClose={() => {
-          setVouchModalOpen(false);
-          setVouchEditData(null);
-        }}
-        onSave={handleSaveVoucher}
-        editData={vouchEditData}
-        saving={saving}
-      />
-      <RedeemLinkFormModal
-        isOpen={redeemModalOpen}
-        onClose={() => {
-          setRedeemModalOpen(false);
-          setRedeemEditData(null);
-        }}
-        onSubmit={async (data) => {
-          try {
-            if (redeemEditData) {
-              await updateRedeemLink(redeemEditData.id, data);
-              showToast("Link redeem berhasil diupdate", "success");
-            } else {
-              await addRedeemLink(data);
-              showToast("Link redeem baru berhasil dibuat", "success");
-            }
-            setRedeemModalOpen(false);
-          } catch (err: any) {
-            showToast(err.message, "error");
-          }
-        }}
-        editData={redeemEditData}
-      />
-    </div>
-  );
-}
-
-// ============================================
-// ROOT COMPONENT: Auth Gate
-// ============================================
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
+  // Active Tab: "inventory" | "create"
+  const [activeTab, setActiveTab] = useState<"inventory" | "create">("inventory");
+
+  // Form input states (CREATE)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [secret2fa, setSecret2fa] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [show2fa, setShow2fa] = useState(false);
+
+  // Submission states
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedTemplate, setCopiedTemplate] = useState(false);
+
+  // Accounts list state (READ)
+  const [accounts, setAccounts] = useState<AccountItem[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copiedAccountField, setCopiedAccountField] = useState<string | null>(null);
+
+  // Edit Modal State (UPDATE)
+  const [editingAccount, setEditingAccount] = useState<AccountItem | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editSecret2fa, setEditSecret2fa] = useState("");
+  const [editShowPassword, setEditShowPassword] = useState(false);
+  const [editUpdating, setEditUpdating] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  // Delete Dialog State (DELETE)
+  const [deletingAccount, setDeletingAccount] = useState<AccountItem | null>(null);
+  const [deletingLoading, setDeletingLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+
+
+  const getAuthToken = async () => {
+    if (!auth.currentUser) throw new Error("Silakan masuk melalui Firebase.");
+    return auth.currentUser.getIdToken();
+  };
+
+  const fetchAccounts = useCallback(async () => {
+    setLoadingAccounts(true);
+    try {
+      const token = await getAuthToken();
+      const res = await fetch("/api/claims", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.accounts)) throw new Error(data.error || "Gagal memuat akun.");
+      if (auth.currentUser) setAccounts(data.accounts);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal memuat akun.");
+    } finally {
+      setLoadingAccounts(false);
+    }
   }, []);
+
+  useEffect(() => onAuthStateChanged(auth, (u) => {
+    setUser(u);
+    setAuthLoading(false);
+    setAccounts([]);
+    setGeneratedCode("");
+    setEditingAccount(null);
+    setDeletingAccount(null);
+    if (u) void fetchAccounts();
+  }), [fetchAccounts]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+    } catch {
+      setLoginError("Login Firebase gagal. Periksa email, password, dan koneksi Anda.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleCreateClaim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrorMessage("");
+    setGeneratedCode("");
+
+    try {
+      const token = await getAuthToken();
+      const clean2fa = secret2fa.replace(/\s/g, "").toUpperCase();
+
+      const response = await fetch("/api/claims", {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "create",
+          account: {
+            email: email.trim(),
+            password: password,
+            secret2fa: clean2fa,
+          },
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Gagal menyimpan akun.");
+      }
+
+      setGeneratedCode(result.code);
+      setEmail("");
+      setPassword("");
+      setSecret2fa("");
+      void fetchAccounts();
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan akun."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // U - UPDATE Account
+  const openEditModal = (acc: AccountItem) => {
+    setEditingAccount(acc);
+    setEditEmail(acc.email);
+    setEditPassword(acc.password);
+    setEditSecret2fa(acc.secret2fa);
+    setEditError("");
+    setEditShowPassword(false);
+  };
+
+  const handleUpdateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccount) return;
+    setEditUpdating(true);
+    setEditError("");
+
+    try {
+      const token = await getAuthToken();
+      const clean2fa = editSecret2fa.replace(/\s/g, "").toUpperCase();
+
+      const res = await fetch("/api/claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "update",
+          hash: editingAccount.hash,
+          account: {
+            email: editEmail.trim(),
+            password: editPassword,
+            secret2fa: clean2fa,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memperbarui akun.");
+      }
+
+      setEditingAccount(null);
+      void fetchAccounts();
+    } catch (err: unknown) {
+      setEditError(err instanceof Error ? err.message : "Gagal memperbarui akun.");
+    } finally {
+      setEditUpdating(false);
+    }
+  };
+
+  // D - DELETE Account
+  const handleDeleteAccount = async () => {
+    if (!deletingAccount) return;
+    setDeletingLoading(true);
+    setDeleteError("");
+
+    try {
+      const token = await getAuthToken();
+      const res = await fetch("/api/claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "delete",
+          hash: deletingAccount.hash,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal menghapus akun.");
+      }
+
+      setDeletingAccount(null);
+      void fetchAccounts();
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Gagal menghapus akun.");
+    } finally {
+      setDeletingLoading(false);
+    }
+  };
+
+  // Filter accounts by search query
+  const filteredAccounts = useMemo(() => {
+    if (!searchQuery.trim()) return accounts;
+    const q = searchQuery.toLowerCase().trim();
+    return accounts.filter(
+      (acc) =>
+        acc.email.toLowerCase().includes(q) ||
+        (acc.code && acc.code.toLowerCase().includes(q)) ||
+        (acc.secret2fa && acc.secret2fa.toLowerCase().includes(q))
+    );
+  }, [accounts, searchQuery]);
+
+
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-400" />
-        <p className="text-slate-500 text-sm">Memuat...</p>
+      <div className="min-h-screen bg-[#070b0e] text-slate-300 flex flex-col items-center justify-center gap-3">
+        <Loader2 size={32} className="animate-spin text-emerald-500" />
+        <p className="text-slate-400 text-sm font-mono">Memuat Sistem Admin...</p>
       </div>
     );
   }
 
+  // Not logged in -> Show Login form
   if (!user) {
-    return <LoginScreen />;
+    return (
+      <div className="min-h-screen bg-[#070b0e] text-slate-200 flex items-center justify-center p-4">
+        <div className="w-full max-w-[400px] bg-[#0c1218] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-400">
+              <Shield size={28} />
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-tight">Admin Portal</h1>
+            <p className="text-slate-400 text-xs mt-1">DevTech AI Store • ChatGPT Plus</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                Email Admin
+              </label>
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-[#080d12] border border-slate-700 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-500"
+                placeholder="admin@email.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-[#080d12] border border-slate-700 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-500"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {loginError && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40"
+            >
+              {loginLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+              Masuk Dashboard
+            </button>
+          </form>
+
+          <Link
+                      href="/"
+            className="flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs mt-6 transition-colors"
+          >
+            <Home size={12} /> Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    );
   }
 
-  // Dashboard hanya dirender setelah user login
-  // Ini penting agar useSubscribers() dan useVouchers() hanya berjalan setelah auth
-  return <DashboardContent user={user} />;
+  const claimMessageTemplate = generatedCode
+    ? `*PESANAN CHATGPT PLUS PRIVATE ANDA TELAH SIAP!*\n──────────────────────────\nTerima kasih telah berbelanja di DevTech AI Store.\n\nBerikut kode klaim lisensi akun ChatGPT Plus Private Anda:\n\n🔑 *KODE KLAIM:* \`${generatedCode}\`\n\n──────────────────────────\n*Cara Klaim Akun & Kode OTP:*\n1. Buka halaman klaim kami di: ${window.location.origin}/claim\n2. Masukkan kode lisensi di atas pada terminal.\n3. Salin Email, Password, dan Kunci 2FA akun Anda.\n4. Buka https://2fa.live/ untuk mendapatkan 6-digit kode verifikasi login ke https://chatgpt.com.\n\n_Akun private dengan password yang bisa Anda ganti._`
+    : "";
+
+  return (
+    <div className="min-h-screen bg-[#070b0e] text-slate-200">
+      {/* Top Navbar */}
+      <header className="border-b border-slate-800 bg-[#0a0f14]/80 backdrop-blur sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">
+              DT
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-white flex items-center gap-2">
+                DevTech Admin <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">ChatGPT Plus</span>
+              </h1>
+              <p className="text-[11px] text-slate-500 font-mono">{user.email}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="/claim"
+              target="_blank"
+              rel="noreferrer"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors"
+            >
+              <span>Buka /claim</span>
+              <ExternalLink size={12} />
+            </a>
+            <button
+              onClick={() => {
+                void signOut(auth).catch(() => setErrorMessage("Gagal keluar. Silakan coba lagi."));
+              }}
+              className="flex items-center gap-1.5 text-xs font-medium text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-950/50 border border-red-900/40 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              <LogOut size={13} />
+              <span>Keluar</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
+        {/* Navigation Tabs Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              {activeTab === "inventory" ? (
+                <>
+                  <Database size={24} className="text-emerald-400" />
+                  Daftar Akun Tersimpan
+                </>
+              ) : (
+                <>
+                  <PlusCircle size={24} className="text-emerald-400" />
+                  Tambah Akun Baru
+                </>
+              )}
+            </h2>
+            <p className="text-slate-400 text-sm mt-1">
+              {activeTab === "inventory"
+                ? "Kelola semua akun ChatGPT Plus Private (Lihat, Edit, Hapus, dan Salin Kode Klaim)."
+                : "Masukkan kredensial akun baru untuk dienkripsi permanen dan di-generate kode klaim."}
+            </p>
+          </div>
+
+          {/* Tab Switcher Buttons */}
+          <div className="flex items-center p-1 bg-[#0b1016] border border-slate-800 rounded-xl self-start sm:self-auto">
+            <button
+              onClick={() => setActiveTab("inventory")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "inventory"
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/50"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Database size={14} />
+              <span>Daftar Akun</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                  activeTab === "inventory"
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-800 text-slate-300"
+                }`}
+              >
+                {accounts.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("create")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "create"
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-950/50"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <PlusCircle size={14} />
+              <span>Tambah Akun</span>
+            </button>
+          </div>
+        </div>
+
+        {/* TAB 1: DAFTAR AKUN TERSIMPAN (READ + CRUD Actions) */}
+        {activeTab === "inventory" && (
+          <div className="space-y-6">
+            {/* Search and Action Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#0b1016] border border-slate-800 p-3 sm:p-4 rounded-xl">
+              <div className="relative flex-1">
+                <Search
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari berdasarkan email, kode klaim, atau 2FA key..."
+                  className="w-full pl-9 pr-4 py-2 bg-[#070b0e] border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchAccounts}
+                  disabled={loadingAccounts}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#0e161c] hover:bg-[#152028] border border-slate-800 hover:border-slate-700 text-slate-300 text-xs rounded-lg transition-colors cursor-pointer"
+                >
+                  <RefreshCw
+                    size={13}
+                    className={loadingAccounts ? "animate-spin text-emerald-400" : ""}
+                  />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("create")}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-md shadow-emerald-950/40"
+                >
+                  <PlusCircle size={14} />
+                  <span>Tambah Baru</span>
+                </button>
+              </div>
+            </div>
+
+            {errorMessage && <p role="alert" className="text-sm text-red-400">{errorMessage}</p>}
+            {/* List / Table of Accounts */}
+            {loadingAccounts && accounts.length === 0 ? (
+              <div className="bg-[#0b1016] border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-xs font-mono">
+                <Loader2 size={24} className="animate-spin text-emerald-400 mx-auto mb-3" />
+                Memuat data akun dari database terenkripsi...
+              </div>
+            ) : filteredAccounts.length === 0 ? (
+              <div className="bg-[#0b1016] border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mx-auto">
+                  <Database size={22} />
+                </div>
+                <h3 className="text-white font-semibold text-sm">
+                  {searchQuery ? "Tidak ada akun yang cocok" : "Belum ada akun tersimpan"}
+                </h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  {searchQuery
+                    ? "Coba gunakan kata kunci pencarian yang lain."
+                    : "Klik tombol 'Tambah Baru' di atas untuk menyimpan akun ChatGPT Plus Private pertama."}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setActiveTab("create")}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  >
+                    <PlusCircle size={14} />
+                    <span>Tambah Akun Baru</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {filteredAccounts.map((acc, idx) => {
+                  const dateStr = new Date(acc.createdAt).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  return (
+                    <div
+                      key={acc.hash || idx}
+                      className="bg-[#0b1016] border border-slate-800 hover:border-slate-700/80 rounded-xl p-4 sm:p-5 transition-all shadow-lg space-y-3.5"
+                    >
+                      {/* Card Header: Index, Email, Date, Action Buttons (Edit, Delete) */}
+                      <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-800/80">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center font-mono border border-emerald-500/20">
+                            {idx + 1}
+                          </span>
+                          <span className="text-white font-mono text-sm sm:text-base font-semibold select-all">
+                            {acc.email}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mr-2">
+                            <Clock size={11} /> {dateStr}
+                          </span>
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => openEditModal(acc)}
+                            className="flex items-center gap-1 text-[11px] text-slate-300 hover:text-white bg-[#0e161c] hover:bg-[#152028] border border-slate-800 hover:border-slate-700 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                            title="Edit data akun ini"
+                          >
+                            <Edit2 size={12} className="text-blue-400" />
+                            <span>Edit</span>
+                          </button>
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => {
+                              setDeletingAccount(acc);
+                              setDeleteError("");
+                            }}
+                            className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-800 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                            title="Hapus akun dari database"
+                          >
+                            <Trash2 size={12} />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card Content: Password & 2FA Key */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="bg-[#070b0e] border border-slate-800/80 rounded-lg p-3 flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-500 uppercase font-mono block mb-0.5">
+                              Password
+                            </span>
+                            <span className="text-slate-200 font-mono font-semibold truncate block select-all">
+                              {acc.password}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(acc.password);
+                              setCopiedAccountField(`${idx}-pass`);
+                              setTimeout(() => setCopiedAccountField(null), 1500);
+                            }}
+                            className="text-[11px] text-slate-400 hover:text-emerald-400 p-1.5 rounded bg-slate-900 border border-slate-800 shrink-0 cursor-pointer"
+                            title="Salin password"
+                          >
+                            {copiedAccountField === `${idx}-pass` ? (
+                              <Check size={13} className="text-emerald-400" />
+                            ) : (
+                              <Copy size={13} />
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="bg-[#070b0e] border border-slate-800/80 rounded-lg p-3 flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-500 uppercase font-mono block mb-0.5">
+                              2FA Secret (Base32)
+                            </span>
+                            <span className="text-amber-300 font-mono font-semibold truncate block select-all text-xs">
+                              {acc.secret2fa}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(acc.secret2fa);
+                              setCopiedAccountField(`${idx}-2fa`);
+                              setTimeout(() => setCopiedAccountField(null), 1500);
+                            }}
+                            className="text-[11px] text-slate-400 hover:text-amber-400 p-1.5 rounded bg-slate-900 border border-slate-800 shrink-0 cursor-pointer"
+                            title="Salin 2FA Secret"
+                          >
+                            {copiedAccountField === `${idx}-2fa` ? (
+                              <Check size={13} className="text-emerald-400" />
+                            ) : (
+                              <Copy size={13} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card Footer: Green Buyer Claim Code */}
+                      {acc.code && (
+                        <div className="bg-[#070b0e] border border-emerald-500/30 rounded-lg p-3 flex items-center justify-between gap-3 flex-wrap">
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-emerald-400 uppercase font-mono block mb-0.5">
+                              Kode Klaim Pembeli (Lisensi 43-Karakter)
+                            </span>
+                            <span className="text-emerald-300 font-mono text-xs sm:text-sm font-semibold truncate block select-all">
+                              {acc.code}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(acc.code);
+                                setCopiedAccountField(`${idx}-code`);
+                                setTimeout(() => setCopiedAccountField(null), 1500);
+                              }}
+                              className="text-xs text-emerald-400 hover:text-emerald-300 px-3 py-1.5 bg-emerald-950/50 hover:bg-emerald-950/80 rounded-lg border border-emerald-500/40 shrink-0 flex items-center gap-1.5 font-semibold cursor-pointer transition-colors"
+                            >
+                              {copiedAccountField === `${idx}-code` ? (
+                                <Check size={13} />
+                              ) : (
+                                <Copy size={13} />
+                              )}
+                              <span>
+                                {copiedAccountField === `${idx}-code`
+                                  ? "Tersalin"
+                                  : "Salin Kode"}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: TAMBAH AKUN BARU (CREATE) */}
+        {activeTab === "create" && (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="bg-[#0b1016] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                  <Sparkles size={18} className="text-emerald-400" />
+                  Form Input Akun ChatGPT Plus
+                </h3>
+                <p className="text-slate-400 text-xs mt-1">
+                  Kredensial akan langsung dienkripsi permanen dengan AES-256-GCM dan sistem otomatis membuat kode klaim acak.
+                </p>
+              </div>
+
+              <form onSubmit={handleCreateClaim} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">
+                    Email Akun ChatGPT
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="contoh: user.chatgpt@icloud.com"
+                    className="w-full px-4 py-3 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600 font-mono"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">
+                    Password Akun
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password akun ChatGPT..."
+                      className="w-full px-4 py-3 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600 font-mono pr-11"
+                      required
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-2">
+                    2FA Secret Key (Base32)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={show2fa ? "text" : "password"}
+                      value={secret2fa}
+                      onChange={(e) => setSecret2fa(e.target.value)}
+                      placeholder="Contoh: QCPIL2Y4MW6YSU3D3RCSWMGLKCXKDNEF"
+                      className="w-full px-4 py-3 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600 font-mono pr-11 uppercase"
+                      required
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShow2fa(!show2fa)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                    >
+                      {show2fa ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5 font-mono">
+                    <Key size={12} className="text-emerald-500 shrink-0" />
+                    Kunci ini dipakai pembeli untuk generate kode OTP di 2fa.live
+                  </p>
+                </div>
+
+                {errorMessage && (
+                  <div className="p-3.5 bg-red-950/40 border border-red-800/60 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-red-400 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Mengenkripsi & Menyimpan ke Database...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Shield size={16} />
+                      <span>Simpan Akun & Buat Kode Klaim Acak</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Success Box after Generation */}
+            {generatedCode && (
+              <div className="bg-[#0b1016] border border-emerald-500/40 rounded-2xl p-6 sm:p-8 space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="flex items-center gap-2.5 text-emerald-400 font-bold text-sm">
+                  <CheckCircle2 size={18} />
+                  <span>Akun Berhasil Tersimpan Permanen!</span>
+                </div>
+
+                <div className="bg-[#070b0e] border border-emerald-500/30 rounded-xl p-4">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-mono block mb-1">
+                    Kode Klaim Lisensi Pembeli:
+                  </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <code className="text-emerald-400 font-mono text-sm sm:text-base font-bold break-all select-all">
+                      {generatedCode}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedCode);
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                    >
+                      {copiedCode ? <Check size={13} /> : <Copy size={13} />}
+                      <span>{copiedCode ? "Tersalin" : "Salin Kode"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-300">
+                      Template Pesan WhatsApp untuk Pembeli:
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(claimMessageTemplate);
+                        setCopiedTemplate(true);
+                        setTimeout(() => setCopiedTemplate(false), 2000);
+                      }}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedTemplate ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedTemplate ? "Pesan Tersalin!" : "Salin Format WA"}</span>
+                    </button>
+                  </div>
+                  <pre className="p-4 bg-[#070b0e] border border-slate-800 rounded-xl text-slate-300 text-xs font-mono whitespace-pre-wrap leading-relaxed select-all">
+                    {claimMessageTemplate}
+                  </pre>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => setActiveTab("inventory")}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Database size={13} />
+                    <span>Lihat di Daftar Akun</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* MODAL: EDIT AKUN (UPDATE) */}
+      {editingAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0b1016] border border-slate-800 rounded-2xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Edit2 size={18} className="text-blue-400" />
+                <h3 className="text-base font-bold text-white">Edit Data Akun ChatGPT</h3>
+              </div>
+              <button
+                onClick={() => setEditingAccount(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateAccount} className="space-y-4 mt-5">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Email Akun
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Password Akun
+                </label>
+                <div className="relative">
+                  <input
+                    type={editShowPassword ? "text" : "password"}
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditShowPassword(!editShowPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                  >
+                    {editShowPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  2FA Secret Key (Base32)
+                </label>
+                <input
+                  type="text"
+                  value={editSecret2fa}
+                  onChange={(e) => setEditSecret2fa(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#070b0e] border border-slate-800 rounded-xl text-white text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono uppercase"
+                  required
+                />
+              </div>
+
+              {editError && (
+                <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                  <AlertTriangle size={15} className="shrink-0 text-red-400" />
+                  <span>{editError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingAccount(null)}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={editUpdating}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-lg shadow-blue-950/50"
+                >
+                  {editUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  <span>Simpan Perubahan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DIALOG: HAPUS AKUN (DELETE) */}
+      {deletingAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0b1016] border border-red-900/50 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto mb-4">
+              <Trash2 size={24} />
+            </div>
+
+            <h3 className="text-center text-base font-bold text-white mb-2">
+              Hapus Akun Ini?
+            </h3>
+            <p className="text-center text-xs text-slate-400 mb-4">
+              Akun <strong className="text-slate-200 font-mono">{deletingAccount.email}</strong> akan dihapus permanen dari database. Kode klaim pembeli tidak akan dapat dipakai lagi.
+            </p>
+
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                <AlertTriangle size={15} className="shrink-0 text-red-400" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingAccount(null)}
+                disabled={deletingLoading}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deletingLoading}
+                className="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-lg shadow-red-950/50"
+              >
+                {deletingLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Ya, Hapus Akun</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
+

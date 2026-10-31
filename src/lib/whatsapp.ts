@@ -6,6 +6,9 @@ const WHATSAPP_NUMBER = "6285872066832";
 export interface OrderDataPaket1 {
   paket: "super_power";
   nama: string;
+  whatsapp?: string;
+  email?: string;
+  durasi?: number;
   harga: number;
   voucherCode: string | null;
   diskon: number;
@@ -48,13 +51,16 @@ function formatRupiahWA(angka: number): string {
 export function formatOrderMessage(data: OrderData): string {
   if (data.paket === "super_power") {
     const p1Lines = [
-      "*PRE-ORDER - DevTech AI Store*",
+      "*ORDER - DevTech AI Store*",
       "━━━━━━━━━━━━━━━━",
       `Nama: ${data.nama}`,
+      data.whatsapp ? `WhatsApp: ${data.whatsapp}` : "",
+      data.email && data.email !== "-" ? `Email: ${data.email}` : "",
       "━━━━━━━━━━━━━━━━",
-      "Paket: Super Power (18 Bulan)",
+      "Paket: ChatGPT Plus (Akun Private Hak Milik)",
+      `Durasi: ${data.durasi || 1} Bulan`,
       `Harga: Rp${formatRupiahWA(data.harga)}`,
-    ];
+    ].filter(Boolean);
 
     if (data.voucherCode && data.diskon > 0) {
       p1Lines.push(`Voucher: ${data.voucherCode} (-Rp${formatRupiahWA(data.diskon)})`);
@@ -64,7 +70,8 @@ export function formatOrderMessage(data: OrderData): string {
       `*Total: Rp${formatRupiahWA(data.totalBayar)}*`,
       "━━━━━━━━━━━━━━━━",
       "",
-      "Halo, saya ingin membeli Paket Super Power Google AI Pro 18 Bulan.",
+      "Halo, saya ingin membeli Paket ChatGPT Plus (Akun Private Hak Milik).",
+      "Mohon kirimkan Kode Kunci Klaim akun setelah pembayaran terkonfirmasi.",
       "",
       formatTanggal()
     );
@@ -72,15 +79,15 @@ export function formatOrderMessage(data: OrderData): string {
     return p1Lines.join("\n");
   }
 
-  // Paket Invitation
+  // Paket Sharing
   const lines = [
-    "*PRE-ORDER - DevTech AI Store*",
+    "*ORDER - DevTech AI Store*",
     "━━━━━━━━━━━━━━━━",
     `Nama: ${data.nama}`,
     `Email: ${data.email}`,
     `WhatsApp: ${data.whatsapp}`,
     "━━━━━━━━━━━━━━━━",
-    "Paket: Invitation (Family Invite)",
+    "Paket: ChatGPT Plus (Akun Sharing)",
     `Durasi: ${data.durasi} Bulan`,
     `Harga: Rp${formatRupiahWA(data.harga)}`,
   ];
@@ -93,7 +100,8 @@ export function formatOrderMessage(data: OrderData): string {
     `*Total: Rp${formatRupiahWA(data.totalBayar)}*`,
     "━━━━━━━━━━━━━━━━",
     "",
-    "Halo, saya ingin membeli Paket Invitation Google AI Pro.",
+    "Halo, saya ingin membeli Paket ChatGPT Plus (Akun Sharing).",
+    "Mohon kirimkan Kode Kunci Klaim akun setelah pembayaran terkonfirmasi.",
     "",
     formatTanggal()
   );
