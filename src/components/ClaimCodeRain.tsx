@@ -2,7 +2,7 @@ import styles from "./claim-code-rain.module.css";
 
 /** Decorative, deterministic code rain: no credentials or live data. */
 export default function ClaimCodeRain() {
-  const glyphs = "01abcdef{}[]<>/アイウエオカキクケコ";
+  const glyphs = "01001101011000110100101110010110";
   return (
     <div className={styles.rain} aria-hidden="true">
       {Array.from({ length: 24 }, (_, column) => (
